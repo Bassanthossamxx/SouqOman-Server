@@ -5,10 +5,11 @@ __pycache__/
 
 # C extensions
 *.so
-
+migrations/*
+!migrations/__init__.py
 # Distribution / packaging
 .venv
-env
+.env
 .idea
 .Python
 build/
@@ -141,9 +142,9 @@ celerybeat.pid
 .env
 .envrc
 .venv
-env/
+.env/
 venv/
-ENV/
+.env/
 env.bak/
 venv.bak/
 

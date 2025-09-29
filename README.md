@@ -104,4 +104,4 @@ Add future technical or API documentation inside `docs/` to keep this README foc
 ---
 ### Summary
 This README only provides the setup and structure details for the project. It does NOT mean the business logic, models, or API features are already implemented. Use it as a guide to configure the environment.
-@bassanthossamxx
+##### All rights back to @bassanthossamxx

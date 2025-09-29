@@ -33,6 +33,7 @@ apps/
   products/
   orders/
   cart/
+ docs/
 requirements.txt
 ```
 Each app has:
@@ -94,6 +95,12 @@ Visit: http://127.0.0.1:8000/admin/
 ---
 ## 6. Database Notes
 The project parses `DATABASE_URL` into Django's DB settings. Make sure the database exists first.
+---
+## 7. Documentation
+A `docs/` directory is included for project-specific documentation. Current files:
+- `docs/Authoverview.md` – Authentication flow and endpoints overview (work in progress)
+
+Add future technical or API documentation inside `docs/` to keep this README focused on setup and structure.
 ---
 ### Summary
 This README only provides the setup and structure details for the project. It does NOT mean the business logic, models, or API features are already implemented. Use it as a guide to configure the environment.

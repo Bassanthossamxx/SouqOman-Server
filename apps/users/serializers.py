@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model , authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+
 
 User = get_user_model()
 
@@ -59,3 +60,19 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         user.save()
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        phone = attrs.get("phone")
+        password = attrs.get("password")
+
+        user = authenticate(username=phone, password=password)
+        if not user:
+            raise serializers.ValidationError("Invalid phone or password.")
+
+        attrs["user"] = user
+        return attrs

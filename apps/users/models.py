@@ -17,6 +17,8 @@ class User(AbstractUser):
         max_length=15,
         unique=True,
         validators=[validate_omani_phone],
+        blank=False,
+        null=False,
     )
     email = models.EmailField(unique=True)
 

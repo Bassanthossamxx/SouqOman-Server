@@ -1,12 +1,13 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.db import models
 
 from core.validators import (
     validate_name_ar,
     validate_name_en,
     validate_omani_phone,
 )
+
 from .choices import GOVERNORATE_MAP, WILAYAT_MAP
 
 
@@ -57,6 +58,4 @@ class User(AbstractUser):
         if self.governorate:
             valid_wilayats = WILAYAT_MAP.get(self.governorate, {})
             if self.wilayat not in valid_wilayats.keys():
-                raise ValidationError(
-                    {"wilayat": f"{self.wilayat} is not valid for {self.governorate}"}
-                )
+                raise ValidationError({"wilayat": f"{self.wilayat} is not valid for {self.governorate}"})

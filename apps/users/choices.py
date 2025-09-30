@@ -1,4 +1,3 @@
-
 GOVERNORATE_MAP = {
     "Muscat": "مسقط",
     "Dhofar": "ظفار",

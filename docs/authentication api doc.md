@@ -1,6 +1,6 @@
 # Authentication API Documentation
 
-This document provides detailed information about the authentication endpoints for SouqOman platform. It covers both user registration and login processes, including request parameters, validation rules, error scenarios, and response formats.
+This document provides detailed information about the authentication endpoints for SouqOman platform. It covers user registration, login, logout, user details, token management processes, including request parameters, validation rules, error scenarios, and response formats.
 
 ## Authentication Endpoints
 
@@ -164,6 +164,183 @@ Authenticates a user and provides access tokens.
 }
 ```
 
+### 3. User Logout
+
+Logs out a user by blacklisting their refresh token.
+
+**Endpoint:** `/users/logout/`
+
+**Method:** `POST`
+
+**Content-Type:** `application/json`
+
+**Authentication:** Requires a valid access token in the Authorization header.
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| refresh | string | Yes | The refresh token received during login |
+
+#### Example Request
+
+```json
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### Success Response (205 Reset Content)
+
+```json
+{
+  "detail": "Successfully logged out."
+}
+```
+
+#### Error Responses
+
+**400 Bad Request**
+
+```json
+{
+  "error": "Refresh token is required."
+}
+```
+
+or
+
+```json
+{
+  "error": "Invalid or expired token."
+}
+```
+
+**401 Unauthorized**
+
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+### 4. User Details
+
+Retrieves the authenticated user's profile details.
+
+**Endpoint:** `/users/me/`
+
+**Method:** `GET`
+
+**Authentication:** Requires a valid access token in the Authorization header.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "id": 1,
+  "phone": "+96812345678",
+  "email": "user@example.com",
+  "full_name_ar": "محمد أحمد",
+  "full_name_en": "Mohammed Ahmed",
+  "governorate": "Muscat",
+  "wilayat": "Al Seeb"
+  // Other user fields may be included based on the UserSerializer configuration
+}
+```
+
+#### Error Response (401 Unauthorized)
+
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+### 5. JWT Token Obtain
+
+Alternative endpoint to obtain JWT tokens using standard JWT authentication.
+
+**Endpoint:** `/users/token/`
+
+**Method:** `POST`
+
+**Content-Type:** `application/json`
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| username | string | Yes | User's phone number (used as username) |
+| password | string | Yes | User's password |
+
+#### Example Request
+
+```json
+{
+  "username": "+96812345678",
+  "password": "SecurePassword123"
+}
+```
+
+#### Success Response (200 OK)
+
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### Error Response (401 Unauthorized)
+
+```json
+{
+  "detail": "No active account found with the given credentials"
+}
+```
+
+### 6. JWT Token Refresh
+
+Obtain a new access token using a valid refresh token.
+
+**Endpoint:** `/users/token/refresh/`
+
+**Method:** `POST`
+
+**Content-Type:** `application/json`
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| refresh | string | Yes | The refresh token received during login |
+
+#### Example Request
+
+```json
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### Success Response (200 OK)
+
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // New JWT access token
+}
+```
+
+#### Error Response (401 Unauthorized)
+
+```json
+{
+  "detail": "Token is invalid or expired",
+  "code": "token_not_valid"
+}
+```
+
 ## Authentication Flow
 
 1. **Registration:**
@@ -172,18 +349,26 @@ Authenticates a user and provides access tokens.
    - User can then proceed to login
 
 2. **Login:**
-   - User provides phone and password to `/users/login/`
+   - User provides phone and password to `/users/login/` (or alternatively `/users/token/`)
    - On successful authentication, server returns access and refresh tokens
    - Frontend should store these tokens securely (e.g., in HTTP-only cookies or secure localStorage)
    - Include the access token in subsequent API calls in the Authorization header: `Authorization: Bearer {access_token}`
 
 3. **Using the Access Token:**
-   - Access token typically expires after a short period ( 6 hours)
+   - Access token typically expires after a short period (6 hours)
    - Include it in the Authorization header for authenticated requests
 
 4. **Token Refresh:**
    - When access token expires, use the refresh token to obtain a new access token
-   - This is handled through a separate endpoint "will be added soon"
+   - Send the refresh token to `/users/token/refresh/` to get a new access token
+   - Continue using the new access token for authenticated requests
+
+5. **Logout:**
+   - Send the refresh token to `/users/logout/` to invalidate the user's session
+   - Clear tokens from frontend storage after successful logout
+
+6. **User Profile:**
+   - Access `/users/me/` with a valid access token to retrieve the authenticated user's profile details
 
 ## Governorate and Wilayat Reference Data
 
@@ -292,6 +477,7 @@ Authenticates a user and provides access tokens.
 1. **Token Storage:**
    - Store JWT tokens securely on the client side
    - Never store sensitive tokens in localStorage for production applications
+   - Consider using HTTP-only cookies for the refresh token
 
 2. **Error Handling:**
    - Implement proper error handling for all API responses
@@ -305,3 +491,8 @@ Authenticates a user and provides access tokens.
 4. **Phone Format:**
    - Ensure phone numbers are always formatted as +968XXXXXXXX
    - Consider implementing a phone input mask on the frontend to guide users
+
+5. **Authorization:**
+   - For protected endpoints, always include the access token in the Authorization header
+   - Format: `Authorization: Bearer {access_token}`
+   - Handle token expiration by implementing automatic token refresh using the refresh token

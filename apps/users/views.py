@@ -15,9 +15,6 @@ class RegisterView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
@@ -29,7 +26,7 @@ class LoginView(APIView):
 
             return Response(
                 {
-                    message: "User logged in successfully.",
+                    "message": "User logged in successfully.",
                     "access": str(access),
                     "refresh": str(refresh),
                 },

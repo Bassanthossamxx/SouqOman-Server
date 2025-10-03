@@ -6,7 +6,7 @@ This document provides detailed information about the authentication endpoints f
 
 ### 1. User Registration
 
-Registers a new user in the system.
+Registers a new user in the system and automatically authenticates them (issues JWT access & refresh tokens). There is no need to call the login endpoint after a successful registration.
 
 **Endpoint:** `/users/register/`
 
@@ -46,9 +46,15 @@ Registers a new user in the system.
 
 ```json
 {
-  "detail": "User registered successfully."
+  "message": "User registered successfully.",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
+
+Notes:
+- The user is fully authenticated immediately.
+- Store the tokens securely (prefer HTTP-only cookies or secure storage).
 
 #### Error Responses
 
@@ -151,8 +157,8 @@ Authenticates a user and provides access tokens.
 ```json
 {
   "message": "User logged in successfully.",
-  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // JWT access token
-  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // JWT refresh token
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", 
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
 }
 ```
 
@@ -180,7 +186,7 @@ Logs out a user by blacklisting their refresh token.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| refresh | string | Yes | The refresh token received during login |
+| refresh | string | Yes | The refresh token received during login or registration |
 
 #### Example Request
 
@@ -245,7 +251,6 @@ Retrieves the authenticated user's profile details.
   "full_name_en": "Mohammed Ahmed",
   "governorate": "Muscat",
   "wilayat": "Al Seeb"
-  // Other user fields may be included based on the UserSerializer configuration
 }
 ```
 
@@ -314,7 +319,7 @@ Obtain a new access token using a valid refresh token.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| refresh | string | Yes | The refresh token received during login |
+| refresh | string | Yes | The refresh token received during login or registration |
 
 #### Example Request
 
@@ -328,7 +333,7 @@ Obtain a new access token using a valid refresh token.
 
 ```json
 {
-  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // New JWT access token
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
 }
 ```
 
@@ -341,34 +346,13 @@ Obtain a new access token using a valid refresh token.
 }
 ```
 
-## Authentication Flow
+## Authentication Flow (Updated)
 
-1. **Registration:**
-   - Frontend collects user details and submits to `/users/register/`
-   - If validation passes, user account is created
-   - User can then proceed to login
-
-2. **Login:**
-   - User provides phone and password to `/users/login/` (or alternatively `/users/token/`)
-   - On successful authentication, server returns access and refresh tokens
-   - Frontend should store these tokens securely (e.g., in HTTP-only cookies or secure localStorage)
-   - Include the access token in subsequent API calls in the Authorization header: `Authorization: Bearer {access_token}`
-
-3. **Using the Access Token:**
-   - Access token typically expires after a short period (6 hours)
-   - Include it in the Authorization header for authenticated requests
-
-4. **Token Refresh:**
-   - When access token expires, use the refresh token to obtain a new access token
-   - Send the refresh token to `/users/token/refresh/` to get a new access token
-   - Continue using the new access token for authenticated requests
-
-5. **Logout:**
-   - Send the refresh token to `/users/logout/` to invalidate the user's session
-   - Clear tokens from frontend storage after successful logout
-
-6. **User Profile:**
-   - Access `/users/me/` with a valid access token to retrieve the authenticated user's profile details
+1. Registration: Client sends user data to `/users/register/`. On success, the backend returns both `access` and `refresh` tokens (auto-login). Store them securely immediately.
+2. Authenticated Requests: Use the `access` token in `Authorization: Bearer <access>` for protected endpoints (e.g., `/users/me/`).
+3. Token Refresh: When the access token expires, send the `refresh` token to `/users/token/refresh/` to receive a new access token.
+4. Optional Manual Login: If a user registered earlier and logs out or their tokens are cleared, they can re-authenticate via `/users/login/` or `/users/token/`.
+5. Logout: Invalidate the session by POSTing the `refresh` token to `/users/logout/`.
 
 ## Governorate and Wilayat Reference Data
 

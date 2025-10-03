@@ -11,9 +11,16 @@ class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
+            # Issue JWT tokens immediately so the user is authenticated right after registration
+            refresh = RefreshToken.for_user(user)
+            access = refresh.access_token
             return Response(
-                {"detail": "User registered successfully."},
+                {
+                    "message": "User registered successfully.",
+                    "access": str(access),
+                    "refresh": str(refresh),
+                },
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

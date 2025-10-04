@@ -25,8 +25,3 @@ class SubCategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = SubCategorySerializer
     permission_classes = [IsSuperUserOrReadOnly]
 
-
-class SubCategoryDetailView(generics.RetrieveDestroyAPIView):
-    queryset = SubCategory.objects.all()
-    serializer_class = SubCategorySerializer
-    permission_classes = [IsSuperUserOrReadOnly]

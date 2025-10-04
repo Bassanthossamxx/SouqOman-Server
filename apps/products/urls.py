@@ -3,7 +3,6 @@ from .views import (
     CategoryListCreateView,
     CategoryDetailView,
     SubCategoryListCreateView,
-    SubCategoryDetailView,
 )
 
 urlpatterns = [
@@ -13,5 +12,4 @@ urlpatterns = [
 
     # SubCategories
     path("subcategories/", SubCategoryListCreateView.as_view(), name="subcategory-list-create"),
-    path("subcategories/<int:pk>/", SubCategoryDetailView.as_view(), name="subcategory-detail"),
 ]

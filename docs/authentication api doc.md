@@ -204,6 +204,17 @@ Logs out a user by blacklisting their refresh token.
 }
 ```
 
+Additional Success (200 OK - idempotent):
+
+```json
+{
+  "detail": "Already logged out."
+}
+```
+
+Notes:
+- Logout is idempotent. If the same refresh token is sent again after being blacklisted, the endpoint returns 200 OK with `"detail": "Already logged out."`.
+
 #### Error Responses
 
 **400 Bad Request**
@@ -218,7 +229,7 @@ or
 
 ```json
 {
-  "error": "Invalid or expired token."
+  "error": "Invalid or expired refresh token."
 }
 ```
 

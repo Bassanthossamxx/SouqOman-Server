@@ -10,6 +10,6 @@ urlpatterns = [
     path("categories/", CategoryListCreateView.as_view(), name="category-list-create"),
     path("categories/<int:pk>/", CategoryDetailView.as_view(), name="category-detail"),
 
-    # SubCategories
+    # SubCategories "admin endpoint"
     path("subcategories/", SubCategoryListCreateView.as_view(), name="subcategory-list-create"),
 ]

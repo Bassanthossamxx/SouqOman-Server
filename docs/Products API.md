@@ -157,26 +157,6 @@ The overview describes PRODUCT, AD, search/filter/sort, and response shaping tha
   - POST /api/products/{id}/ad/deactivate
   - Optional: GET /api/ads/ for admin reporting.
 
-### Serializer/Response Rules
-- Product list item
-  {
-    "product_id": 51,
-    "name_ar": "ايفون 15 برو",
-    "name_en": "iPhone 15 Pro",
-    "price": 450.0,
-    "cover_image": "https://cdn.ex.com/51/cover.jpg",
-    "other_images": ["https://cdn.ex.com/51/1.jpg", "https://cdn.ex.com/51/2.jpg"],
-    "governorate": "Muscat",
-    "wilayat": "Al Seeb",
-    "views_count": 129,
-    "posted_at": "2025-09-14T10:22:11Z",
-    "contact_phone": "+96891234567",
-    "whatsapp_link": "https://wa.me/96891234567",
-    "category_id": 3,
-    "subcategory_id": 12,
-    "is_ad": true
-  }
-
 ### Filtering & Search Contract
 - `search`: text across `name_ar`, `name_en`.
 - Filters: `category_id`, `subcategory_id`, `price_min`, `price_max`, `governorate`, `wilayat`.

@@ -8,7 +8,7 @@ from core.validators import (
     validate_omani_phone,
 )
 
-from .choices import GOVERNORATE_MAP, WILAYAT_MAP
+from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 
 
 class User(AbstractUser):

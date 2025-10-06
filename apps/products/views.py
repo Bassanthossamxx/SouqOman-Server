@@ -10,6 +10,7 @@ from .serializers import (
     SubCategorySerializer, ProductSerializer
 )
 from core.permissions import IsSuperUserOrReadOnly
+from .filters import ProductFilter
 
 
 class CategoryListCreateView(generics.ListCreateAPIView):
@@ -35,11 +36,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = [
-        "category__name_en", "category__name_ar",
-        "subcategory__name_en", "subcategory__name_ar",
-        "price", "governorate", "wilayat"
-    ]
+    filterset_class = ProductFilter
     search_fields = [
         "name_en", "name_ar",
         "category__name_en", "category__name_ar",

@@ -41,11 +41,13 @@
 
 **Response (200 OK):**
 ```json
-{
+[
+  {
     "id": 1,
     "name_en": "Electronics",
     "name_ar": "إلكترونيات"
-}
+  }
+]
 ```
 
 ---
@@ -160,18 +162,20 @@
 
 **Response (200 OK):**
 ```json
-{
-  "id": 10,
-  "name_en": "Phones",
-  "name_ar": "هواتف",
-  "category": 1
-},
-{
-  "id": 11,
-  "name_en": "Laptops",
-  "name_ar": "حاسبات",
-  "category": 1
-}
+[
+  {
+    "id": 10,
+    "name_en": "Phones",
+    "name_ar": "هواتف",
+    "category": 1
+  },
+  {
+    "id": 11,
+    "name_en": "Laptops",
+    "name_ar": "حاسبات",
+    "category": 1
+  }
+]
 ```
 
 ---
@@ -217,42 +221,34 @@
 
 ## Product Endpoints
 
-### 1. List All Products (with Filtering & Sorting)
+### 1. List All Products (with Filtering, Searching, Sorting)
 **Endpoint:** `GET /api/products/`
 
-**Description:** Retrieve all products with support for filtering, searching, and sorting.
+**Description:** Retrieve all products with support for filtering (EN/AR), searching, and sorting.
 
 **Permissions:** Public
 
-| Parameter             | Type    | Description                                                        | Example                           |
-|-----------------------|---------|--------------------------------------------------------------------|-----------------------------------|
-| `search`              | string  | Search across product names and category/subcategory names (AR/EN)  | `search=هاتف`                     |
-| `category__name_en`   | string  | Filter by category English name                                    | `category__name_en=Electronics`   |
-| `category__name_ar`   | string  | Filter by category Arabic name                                     | `category__name_ar=إلكترونيات`    |
-| `subcategory__name_en`| string  | Filter by subcategory English name                                 | `subcategory__name_en=Phones`     |
-| `subcategory__name_ar`| string  | Filter by subcategory Arabic name                                  | `subcategory__name_ar=هواتف`      |
-| `price`               | decimal | Filter by exact price                                              | `price=350.00`                    |
-| `governorate`         | string  | Filter by governorate                                              | `governorate=Muscat`              |
-| `wilayat`             | string  | Filter by wilayat                                                  | `wilayat=Muscat`                  |
-| `ordering`            | string  | Sort results                                                       | See sorting options below          |
-**Sorting Options (ordering parameter):**
-- `price` - Price low to high
-- `-price` - Price high to low
-- `posted_at` - Oldest first
-- `-posted_at` - Newest first (default)
-- `views_count` - Least viewed first
-- `-views_count` - Most viewed first
+Supported query parameters:
+- `search`: Free-text search across product names and category/subcategory names (AR/EN).
+- `name`: Filter by product name (AR or EN, partial, case-insensitive).
+- `category`: Filter by category name (AR or EN, partial, case-insensitive).
+- `subcategory`: Filter by subcategory name (AR or EN, partial, case-insensitive).
+- `min_price`: Minimum price (inclusive).
+- `max_price`: Maximum price (inclusive).
+- `governorate`: Bilingual filter. Accepts EN or AR, supports partial match. Internally resolves to the stored EN key.
+- `wilayat`: Bilingual filter. Accepts EN or AR, supports partial match. Internally resolves to the stored EN key.
+- `ordering`: Sorting field. One of: `price`, `-price`, `posted_at`, `-posted_at`, `views_count`, `-views_count`.
 
-**Example Requests:**
-```
-GET /api/products/
-GET /api/products/?search=هاتف
-GET /api/products/?category__name_ar=إلكترونيات&ordering=-price
-GET /api/products/?governorate=Muscat&wilayat=Muscat&ordering=-views_count
-GET /api/products/?search=phone&ordering=price
-```
+Examples:
+- `GET /api/products/?search=هاتف`
+- `GET /api/products/?name=iphone`
+- `GET /api/products/?category=إلكترونيات&ordering=-price`
+- `GET /api/products/?subcategory=هواتف&min_price=50&max_price=500`
+- `GET /api/products/?governorate=مسقط`
+- `GET /api/products/?wilayat=مطرح`
+- `GET /api/products/?governorate=Muscat&wilayat=Muttrah&ordering=-views_count`
 
-**Response (200 OK):**
+Response (200 OK):
 ```json
 {
   "id": 1,

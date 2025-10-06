@@ -3,12 +3,13 @@
 This document provides detailed information about the authentication endpoints for SouqOman platform. It covers user registration, login, logout, user details, token management processes, including request parameters, validation rules, error scenarios, and response formats.
 
 ## Authentication Endpoints
+base url for all endpoints: `/api/auth/`
 
 ### 1. User Registration
 
 Registers a new user in the system and automatically authenticates them (issues JWT access & refresh tokens). There is no need to call the login endpoint after a successful registration.
 
-**Endpoint:** `/users/register/`
+**Endpoint:** register/`
 
 **Method:** `POST`
 
@@ -130,7 +131,7 @@ or
 
 Authenticates a user and provides access tokens.
 
-**Endpoint:** `/users/login/`
+**Endpoint:** `login/`
 
 **Method:** `POST`
 
@@ -174,7 +175,7 @@ Authenticates a user and provides access tokens.
 
 Logs out a user by blacklisting their refresh token.
 
-**Endpoint:** `/users/logout/`
+**Endpoint:** `logout/`
 
 **Method:** `POST`
 
@@ -245,7 +246,7 @@ or
 
 Retrieves the authenticated user's profile details.
 
-**Endpoint:** `/users/me/`
+**Endpoint:** `me/`
 
 **Method:** `GET`
 
@@ -277,7 +278,7 @@ Retrieves the authenticated user's profile details.
 
 Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 
-**Endpoint:** `/users/token/`
+**Endpoint:** `token/`
 
 **Method:** `POST`
 
@@ -320,7 +321,7 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 
 Obtain a new access token using a valid refresh token.
 
-**Endpoint:** `/users/token/refresh/`
+**Endpoint:** `token/refresh/`
 
 **Method:** `POST`
 
@@ -359,11 +360,11 @@ Obtain a new access token using a valid refresh token.
 
 ## Authentication Flow (Updated)
 
-1. Registration: Client sends user data to `/users/register/`. On success, the backend returns both `access` and `refresh` tokens (auto-login). Store them securely immediately.
-2. Authenticated Requests: Use the `access` token in `Authorization: Bearer <access>` for protected endpoints (e.g., `/users/me/`).
-3. Token Refresh: When the access token expires, send the `refresh` token to `/users/token/refresh/` to receive a new access token.
-4. Optional Manual Login: If a user registered earlier and logs out or their tokens are cleared, they can re-authenticate via `/users/login/` or `/users/token/`.
-5. Logout: Invalidate the session by POSTing the `refresh` token to `/users/logout/`.
+1. Registration: Client sends user data to `register/`. On success, the backend returns both `access` and `refresh` tokens (auto-login). Store them securely immediately.
+2. Authenticated Requests: Use the `access` token in `Authorization: Bearer <access>` for protected endpoints (e.g., `me/`).
+3. Token Refresh: When the access token expires, send the `refresh` token to `token/refresh/` to receive a new access token.
+4. Optional Manual Login: If a user registered earlier and logs out or their tokens are cleared, they can re-authenticate via `login/` or `/users/token/`.
+5. Logout: Invalidate the session by POSTing the `refresh` token to `logout/`.
 
 ## Governorate and Wilayat Reference Data
 

@@ -1,6 +1,6 @@
 # SouqOman-Server
 
-A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to ImageKit, and comprehensive filtering/search capabilities.
+A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to Cloudinary, and comprehensive filtering/search capabilities.
 
 ---
 ## 1. Key Features
@@ -21,7 +21,7 @@ A modular Django + Django REST Framework backend for an OLX‑style classifieds 
   - Auto-incrementing view counter for product details
   - WhatsApp integration for contact
   
-- **Image Storage**: ImageKit integration for cloud-based image management
+- **Image Storage**: Cloudinary integration for cloud-based image management
 - **Location System**: Governorate and Wilayat validation for Oman
 - **Database**: PostgreSQL via `DATABASE_URL` (works great with Neon: https://neon.tech)
 - **Environment Variables**: Managed through `python-decouple` / `.env`
@@ -40,7 +40,7 @@ A modular Django + Django REST Framework backend for an OLX‑style classifieds 
 - **Django** 5.2.6
 - **Django REST Framework** 3.16.1
 - **PostgreSQL** (Neon serverless or local)
-- **ImageKit** 4.2.0 (Cloud image storage)
+- **Cloudinary** 1.44.1 (Cloud image storage)
 - **Django Filter** 25.2 (Advanced filtering)
 - **JWT Authentication** (djangorestframework-simplejwt)
 - **Environment Management**: python-decouple, python-dotenv
@@ -53,12 +53,12 @@ SouqOman-Server/
 ├── requirements.txt
 ├── .env (create this)
 ├── core/
-│   ├── settings.py          # Main settings with ImageKit config
+│   ├── settings.py          # Main settings with Cloudinary config (via CLOUDINARY_URL)
 │   ├── urls.py              # Root URL configuration
 │   ├── choices.py           # Governorate/Wilayat mappings
 │   ├── validators.py        # Custom validators (phone, names)
 │   ├── permissions.py       # Custom DRF permissions
-│   ├── utils.py             # ImageKit upload utility
+│   ├── utils.py             # Utilities (helpers)
 │   ├── asgi.py
 │   └── wsgi.py
 ├── apps/
@@ -70,7 +70,7 @@ SouqOman-Server/
 │   │   ├── admin.py
 │   │   └── migrations/
 │   ├── products/
-│   │   ├── models.py        # Category, SubCategory, Product
+│   │   ├── models.py        # Category, SubCategory, Product, ProductImage (Cloudinary-backed)
 │   │   ├── serializers.py   # Product serializers
 │   │   ├── views.py         # Product CRUD & filtering
 │   │   ├── urls.py          # Product routes
@@ -119,16 +119,15 @@ DEBUG=True
 # Database (Neon PostgreSQL)
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DB_NAME
 
-# ImageKit Configuration
-IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
-IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
-IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_imagekit_id
+# Cloudinary Configuration
+# Format: cloudinary://<api_key>:<api_secret>@<cloud_name>
+CLOUDINARY_URL=cloudinary://your_api_key:your_api_secret@your_cloud_name
 ```
 
-**To get ImageKit credentials:**
-1. Sign up at https://imagekit.io
-2. Go to Developer Options
-3. Copy your Public Key, Private Key, and URL Endpoint
+**To get Cloudinary credentials:**
+1. Sign up at https://cloudinary.com
+2. Go to your Dashboard
+3. Copy your Cloud name, API Key, and API Secret and form the `CLOUDINARY_URL`
 
 ### 5. (Optional) Generate a Secure Secret Key
 ```bash
@@ -157,14 +156,12 @@ Visit:
 ---
 ## 5. Environment Variables
 
-| Name                    | Required | Purpose                           | Example                                    |
-|-------------------------|----------|-----------------------------------|--------------------------------------------|
-| SECRET_KEY              | Yes      | Django security key               | (random string from generator)             |
-| DEBUG                   | Yes      | Dev = True / Prod = False         | True                                       |
-| DATABASE_URL            | Yes      | PostgreSQL connection string      | postgres://user:pw@host:5432/db           |
-| IMAGEKIT_PUBLIC_KEY     | Yes      | ImageKit public API key           | public_abc123...                           |
-| IMAGEKIT_PRIVATE_KEY    | Yes      | ImageKit private API key          | private_xyz789...                          |
-| IMAGEKIT_URL_ENDPOINT   | Yes      | ImageKit CDN URL                  | https://ik.imagekit.io/your_id            |
+| Name            | Required | Purpose                          | Example                                              |
+|-----------------|----------|----------------------------------|------------------------------------------------------|
+| SECRET_KEY      | Yes      | Django security key              | (random string from generator)                       |
+| DEBUG           | Yes      | Dev = True / Prod = False        | True                                                 |
+| DATABASE_URL    | Yes      | PostgreSQL connection string     | postgres://user:pw@host:5432/db                      |
+| CLOUDINARY_URL  | Yes      | Cloudinary connection string     | cloudinary://api_key:api_secret@cloud_name           |
 
 ---
 ## 6. API Endpoints
@@ -209,8 +206,8 @@ Products can be filtered by:
 
 ### Image Upload
 - Up to 5 images per product
-- Uploaded to ImageKit cloud storage
-- Automatic URL generation with fileId tracking
+- Uploaded to Cloudinary cloud storage
+- Automatic secure URL generation
 - Supports multiple image formats
 
 ### Location System

@@ -156,7 +156,7 @@
 
 **Description:** Retrieve all subcategories across all categories.
 
-**Permissions:** Superuser only
+**Permissions:** Public
 
 **Response (200 OK):**
 ```json
@@ -267,10 +267,7 @@ GET /api/products/?search=phone&ordering=price
   "governorate": "Muscat",
   "wilayat": "Muscat",
   "image_urls": [
-    {
-      "url": "https://ik.imagekit.io/...",
-      "fileId": "abc123..."
-    }
+    { "id": 101, "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file.jpg" }
   ],
   "price": "350.00",
   "description": "Brand new iPhone 14 with warranty.",
@@ -301,13 +298,13 @@ wilayat: "Muscat" (required)
 price: 350.00 (required)
 description: "Brand new iPhone 14." (required)
 contact_phone: "+96891234567" (required)
-images: [<file1>, <file2>, ...] (optional, max 5)
+images: [<file1>, <file2>, ...] (required, up to 5)
 ```
 
 **Field Requirements:**
-- **Required:** `name_ar`, `category`, `governorate`, `wilayat`, `price`, `description`, `contact_phone`
-- **Optional:** `name_en`, `subcategory`, `images`
-- **Images:** Maximum 5 images allowed
+- **Required:** `name_ar`, `category`, `governorate`, `wilayat`, `price`, `description`, `contact_phone`, `images`
+- **Optional:** `name_en`, `subcategory`
+- **Images:** Up to 5 images will be saved; if more than 5 are uploaded, only the first 5 are stored
 - **Phone Format:** Must be Omani format `+968XXXXXXXX`
 
 **Response (201 Created):**
@@ -325,10 +322,7 @@ images: [<file1>, <file2>, ...] (optional, max 5)
   "governorate": "Muscat",
   "wilayat": "Muscat",
   "image_urls": [
-    {
-      "url": "https://ik.imagekit.io/...",
-      "fileId": "abc123..."
-    }
+    { "id": 101, "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file.jpg" }
   ],
   "price": "350.00",
   "description": "Brand new iPhone 14.",
@@ -345,17 +339,22 @@ images: [<file1>, <file2>, ...] (optional, max 5)
 ```
 ```json
 {
-  "wilayat": ["Muttrah is not valid for Muscat"]
+  "wilayat": ["Wilayat 'Muttrah' is not valid for governorate 'Muscat'."]
 }
 ```
 ```json
 {
-  "images": ["You can upload up to 5 images only."]
+  "images": ["At least one image is required."]
 }
 ```
 ```json
 {
-  "contact_phone": ["Enter a valid Omani phone number (+968XXXXXXXX)."]
+  "price": ["Price must be at least 10.00."]
+}
+```
+```json
+{
+  "contact_phone": ["Phone must follow Omani format: +968XXXXXXXX"]
 }
 ```
 
@@ -390,10 +389,7 @@ images: [<file1>, <file2>, ...] (optional, max 5)
   "governorate": "Muscat",
   "wilayat": "Muscat",
   "image_urls": [
-    {
-      "url": "https://ik.imagekit.io/...",
-      "fileId": "abc123..."
-    }
+    { "id": 101, "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file.jpg" }
   ],
   "price": "350.00",
   "description": "Brand new iPhone 14 with warranty.",
@@ -441,7 +437,7 @@ All validation errors follow Django REST Framework's standard format:
 
 1. **Views Count:** The `views_count` field is automatically incremented each time a product detail is accessed via `GET /api/products/{id}/`. You don't need to manually update it.
 
-2. **Image Upload:** Images are uploaded to ImageKit and stored as a list of objects with `url` and `fileId`. Maximum 5 images per product.
+2. **Image Upload (Cloudinary):** Images are uploaded to Cloudinary. Each product stores up to 5 images as a list of objects with `id` and `url` (secure URL). If you upload more than 5 images, only the first 5 are saved.
 
 3. **Phone Number:** Contact phone must be in Omani format (`+968XXXXXXXX`). The WhatsApp URL is automatically generated from this number.
 
@@ -458,6 +454,8 @@ All validation errors follow Django REST Framework's standard format:
    ```
    GET /api/products/?category__name_ar=إلكترونيات&governorate=Muscat&ordering=-price
    ```
+
+8. **Configuration:** Cloudinary is configured via the `CLOUDINARY_URL` environment variable (see README). Secure URLs are returned by default.
 
 ---
 

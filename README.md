@@ -1,7 +1,9 @@
 # SouqOman-Server
 
 A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to Cloudinary, and comprehensive filtering/search capabilities.
-
+## Postman 
+- Doc : https://documenter.getpostman.com/view/37742819/2sB3QJNASG
+- Collection : https://www.postman.com/bytehive-1150/workspace/mine/collection/37742819-52e9e84a-5c0f-4a56-ac0d-1f3b5be8a7bd?action=share&creator=37742819
 ---
 ## 1. Key Features
 

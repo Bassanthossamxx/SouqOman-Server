@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Category, SubCategory , Product
+from django.db import transaction
 from core.utils import upload_to_imagekit
 
 class SubCategorySerializer(serializers.ModelSerializer):
@@ -23,12 +24,13 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
         model = Category
         fields = ["id", "name_en", "name_ar", "subcategories"]
 
+
 class ProductSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(),
         write_only=True,
         required=False,
-        allow_empty=True,
+        allow_empty=True
     )
     whatsapp_url = serializers.SerializerMethodField()
     user_full_name_en = serializers.CharField(source="user.full_name_en", read_only=True)
@@ -52,7 +54,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "name_ar",
             "governorate",
             "wilayat",
-            "image_urls",
+            "image_urls",  # will store list of dicts: {"url":..., "fileId":...}
             "price",
             "description",
             "contact_phone",
@@ -70,18 +72,31 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_whatsapp_url(self, obj):
         return obj.whatsapp_url
 
+    def validate(self, attrs):
+        # ensure subcategory belongs to category
+        subcategory = attrs.get("subcategory")
+        category = attrs.get("category")
+        if subcategory and category and subcategory.category_id != category.id:
+            raise serializers.ValidationError({"subcategory": "This subcategory does not belong to the selected category."})
+        return attrs
+
     def create(self, validated_data):
         images = validated_data.pop("images", [])
         user = self.context["request"].user
 
-        uploaded_urls = []
+        uploaded_items = []
+        # limit to 5 images
         for img in images[:5]:
-            url = upload_to_imagekit(img)
-            uploaded_urls.append(url)
+            res = upload_to_imagekit(img, getattr(img, "name", None))
+            if res:
+                # store dict with url and fileId if provided
+                uploaded_items.append({
+                    "url": res.get("url"),
+                    "fileId": res.get("fileId"),
+                })
+        validated_data["image_urls"] = uploaded_items
 
-        product = Product.objects.create(
-            user=user,
-            image_urls=uploaded_urls,
-            **validated_data
-        )
+        with transaction.atomic():
+            product = Product.objects.create(user=user, **validated_data)
+
         return product

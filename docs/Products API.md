@@ -1,195 +1,470 @@
-# Products API (Current + Next Steps)
+# Products API Documentation
 
-Base URL prefix: `/api/`
+**Base URL:** `/api/`
 
-Auth & permissions
-- Authentication: JWT (Authorization: `Bearer <token>`). See auth docs for obtaining tokens.
-- Permission on products app endpoints: Read (GET/HEAD/OPTIONS) is public; write (POST/DELETE) requires superuser.
+**Authentication:** JWT (Authorization: `Bearer <token>`)
+
+---
+
+## Table of Contents
+1. [Authentication & Permissions](#authentication--permissions)
+2. [Category Endpoints](#category-endpoints)
+3. [SubCategory Endpoints](#subcategory-endpoints)
+4. [Product Endpoints](#product-endpoints)
+5. [Error Responses](#error-responses)
+
+---
+
+## Authentication & Permissions
+
+- **Authentication Method:** JWT tokens via Authorization header
+- **Header Format:** `Authorization: Bearer <access_token>`
+- **Permissions:**
+  - **Categories & Subcategories:** 
+    - Read (GET): Public access
+    - Write (POST/DELETE): Superuser only
+  - **Products:**
+    - List (GET /products/): Public access
+    - Create (POST /products/): Authenticated users only
+    - Retrieve (GET /products/{id}/): Public access
 
 ---
 
 ## Category Endpoints
 
-### GET /api/categories/
-List all categories (no subcategories embedded).
+### 1. List All Categories
+**Endpoint:** `GET /api/categories/`
 
-Response 200 (application/json)
-[
-  {
+**Description:** Retrieve all categories without subcategories.
+
+**Permissions:** Public
+
+**Response (200 OK):**
+```json
+{
     "id": 1,
     "name_en": "Electronics",
     "name_ar": "إلكترونيات"
-  }
-]
+}
+```
 
 ---
 
-### POST /api/categories/  (superuser)
-Create a new category.
+### 2. Create Category
+**Endpoint:** `POST /api/categories/`
 
-Request body (application/json)
+**Description:** Create a new category.
+
+**Permissions:** Superuser only
+
+**Request Body:**
+```json
 {
   "name_en": "Electronics",
   "name_ar": "إلكترونيات"
 }
+```
 
-Response 201
+**Response (201 Created):**
+```json
 {
   "id": 3,
   "name_en": "Electronics",
   "name_ar": "إلكترونيات"
 }
+```
 
-Validation/Errors
-- Unique on both `name_en` and `name_ar` across all categories.
-- 400 if unique/required validation fails.
-- 403 if not superuser.
+**Validation Rules:**
+- `name_en` and `name_ar` must be unique across all categories
+- Both fields are required
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "name_ar": ["category with this name ar already exists."],
+  "name_en": ["category with this name en already exists."]
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "detail": "You do not have permission to perform this action."
+}
+```
 
 ---
 
-### GET /api/categories/{id}/
-Retrieve a single category including its subcategories.
+### 3. Retrieve Category Details
+**Endpoint:** `GET /api/categories/{id}/`
 
-Response 200
+**Description:** Retrieve a single category with all its subcategories.
+
+**Permissions:** Public
+
+**Response (200 OK):**
+```json
 {
   "id": 1,
   "name_en": "Electronics",
   "name_ar": "إلكترونيات",
   "subcategories": [
-    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1 },
-    { "id": 11, "name_en": "Laptops", "name_ar": "حاسبات", "category": 1 }
+    {
+      "id": 10,
+      "name_en": "Phones",
+      "name_ar": "هواتف",
+      "category": 1
+    },
+    {
+      "id": 11,
+      "name_en": "Laptops",
+      "name_ar": "حاسبات",
+      "category": 1
+    }
   ]
 }
+```
 
-Errors
-- 404 if not found.
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Not found."
+}
+```
 
 ---
 
-### DELETE /api/categories/{id}/  (superuser)
-Delete a category.
+### 4. Delete Category
+**Endpoint:** `DELETE /api/categories/{id}/`
 
-Response 204 No Content
+**Description:** Delete a category.
 
-Errors
-- 404 if not found.
-- 403 if not superuser.
-- 400/409 possible at database level if foreign key constraints are violated (e.g., dependent subcategories). Behavior depends on DB and constraint handling.
+**Permissions:** Superuser only
+
+**Response (204 No Content):** Empty body
+
+**Error Responses:**
+- **404 Not Found:** Category doesn't exist
+- **403 Forbidden:** Not a superuser
 
 ---
 
 ## SubCategory Endpoints
 
-### GET /api/subcategories/
-List all subcategories.
+### 1. List All SubCategories
+**Endpoint:** `GET /api/subcategories/`
 
-Response 200
-[
-  { "id": 10, "name_en": "Phones",  "name_ar": "هواتف",  "category": 1 },
-  { "id": 11, "name_en": "Laptops", "name_ar": "حاسبات", "category": 1 }
-]
+**Description:** Retrieve all subcategories across all categories.
+
+**Permissions:** Superuser only
+
+**Response (200 OK):**
+```json
+{
+  "id": 10,
+  "name_en": "Phones",
+  "name_ar": "هواتف",
+  "category": 1
+},
+{
+  "id": 11,
+  "name_en": "Laptops",
+  "name_ar": "حاسبات",
+  "category": 1
+}
+```
 
 ---
 
-### POST /api/subcategories/  (superuser)
-Create a new subcategory.
+### 2. Create SubCategory
+**Endpoint:** `POST /api/subcategories/`
 
-Request body (application/json)
+**Description:** Create a new subcategory under a category.
+
+**Permissions:** Superuser only
+
+**Request Body:**
+```json
 {
   "name_en": "Tablets",
   "name_ar": "أجهزة لوحية",
   "category": 1
 }
+```
 
-Response 201
+**Response (201 Created):**
+```json
 {
   "id": 12,
   "name_en": "Tablets",
   "name_ar": "أجهزة لوحية",
   "category": 1
 }
+```
 
-Validation/Errors
-- Required: `name_en`, `name_ar`, `category`.
-- Uniqueness: (`category`, `name_en`) and (`category`, `name_ar`) must be unique together.
-- 400 for validation errors, 403 if not superuser.
+**Validation Rules:**
+- Required fields: `name_en`, `name_ar`, `category`
+- Unique together: (`category`, `name_en`) and (`category`, `name_ar`)
 
----
-
-## Error Response Example (validation)
-
-Response 400
+**Error Response (400 Bad Request):**
+```json
 {
-  "name_ar": ["This field must be unique."],
-  "name_en": ["This field must be unique."]
+  "non_field_errors": ["The fields category, name_en must make a unique set."]
 }
+```
 
 ---
 
-## What’s Not Implemented Yet (from Products & Home Overview)
-The overview describes PRODUCT, AD, search/filter/sort, and response shaping that are not yet present in code. Below is the proposed API and a concrete to‑do plan to deliver it.
+## Product Endpoints
 
-### Proposed Models
-- Product
-  - Fields (per overview): product_id (id), name_en (optional), name_ar (required), governorate (required), wilayat (required), price (>= 0), description (required), posted_at (auto), views_count (auto/increment), contact_phone (required, WhatsApp format `+968XXXXXXXX`), category (FK), subcategory (FK, optional), cover_image, other_images (0–7).
-  - Validation rules:
-    - Ensure subcategory belongs to the same category.
-    - Validate governorate/wilayat pair against allowed list.
-    - Validate phone format and provide normalized value (e.g., strip `+`).
-    - Enforce max 7 additional images; exactly one cover image.
-- Ad (one-to-one with Product)
-  - Fields: is_active (bool), start_date (required if active), duration_days (int) with expiry logic.
+### 1. List All Products (with Filtering & Sorting)
+**Endpoint:** `GET /api/products/`
 
-### Proposed Endpoints
-- Products
-  - GET /api/products/
-    - Query params: `search`, `category_id`, `subcategory_id`, `price_min`, `price_max`, `governorate`, `wilayat`, `ordering` in {`-posted_at` (default), `posted_at`, `price`, `-price`}.
-    - Response includes computed: `is_ad`, `whatsapp_link`, separate `cover_image` vs `other_images`.
-  - POST /api/products/  (auth required; define role policy)
-    - Create product with images upload support.
-  - GET /api/products/{id}/
-    - Returns full product record, increments `views_count`.
-  - PATCH /api/products/{id}/  (owner/admin)
-  - DELETE /api/products/{id}/  (owner/admin)
-- Ads
-  - POST /api/products/{id}/ad/activate  (admin or paid flow)
-    - Body: `{ "start_date": "2025-09-14T10:22:11Z", "duration_days": 7 }`.
-  - POST /api/products/{id}/ad/deactivate
-  - Optional: GET /api/ads/ for admin reporting.
+**Description:** Retrieve all products with support for filtering, searching, and sorting.
 
-### Filtering & Search Contract
-- `search`: text across `name_ar`, `name_en`.
-- Filters: `category_id`, `subcategory_id`, `price_min`, `price_max`, `governorate`, `wilayat`.
-- Sorting: `ordering` param as above.
+**Permissions:** Public
 
-### To‑Do Checklist (Next Steps)
-1) Models & migrations
-   - [ ] Create `Product` model with fields/constraints above.
-   - [ ] Create `Ad` model (OneToOne to Product) with activation/expiry logic.
-   - [ ] Add image handling: `images_urls` (will use cloudinary).
-   - [ ] Add choices/validation lists for `governorate` and `wilayat` (reuse central choices). Ensure pair validity.
-   - [ ] Add phone validator to enforce `+968XXXXXXXX` and normalize for `whatsapp_link`.
-   - [ ] Auto set `posted_at`; maintain `views_count` efficiently (consider F expressions).
+| Parameter             | Type    | Description                                                        | Example                           |
+|-----------------------|---------|--------------------------------------------------------------------|-----------------------------------|
+| `search`              | string  | Search across product names and category/subcategory names (AR/EN)  | `search=هاتف`                     |
+| `category__name_en`   | string  | Filter by category English name                                    | `category__name_en=Electronics`   |
+| `category__name_ar`   | string  | Filter by category Arabic name                                     | `category__name_ar=إلكترونيات`    |
+| `subcategory__name_en`| string  | Filter by subcategory English name                                 | `subcategory__name_en=Phones`     |
+| `subcategory__name_ar`| string  | Filter by subcategory Arabic name                                  | `subcategory__name_ar=هواتف`      |
+| `price`               | decimal | Filter by exact price                                              | `price=350.00`                    |
+| `governorate`         | string  | Filter by governorate                                              | `governorate=Muscat`              |
+| `wilayat`             | string  | Filter by wilayat                                                  | `wilayat=Muscat`                  |
+| `ordering`            | string  | Sort results                                                       | See sorting options below          |
+**Sorting Options (ordering parameter):**
+- `price` - Price low to high
+- `-price` - Price high to low
+- `posted_at` - Oldest first
+- `-posted_at` - Newest first (default)
+- `views_count` - Least viewed first
+- `-views_count` - Most viewed first
 
-2) Serializers
-   - [ ] `ProductSerializer` (create/update) with validations: price >= 0, subcategory matches category, images limit.
-   - [ ] `ProductListSerializer` (list) exposing required response fields and `whatsapp_link`, `is_ad`.
-   - [ ] `AdSerializer` for admin actions.
+**Example Requests:**
+```
+GET /api/products/
+GET /api/products/?search=هاتف
+GET /api/products/?category__name_ar=إلكترونيات&ordering=-price
+GET /api/products/?governorate=Muscat&wilayat=Muscat&ordering=-views_count
+GET /api/products/?search=phone&ordering=price
+```
 
-3) Views & URLs
-   - [ ] List/Create: `GET/POST /api/products/` with search, filters, ordering.
-   - [ ] Retrieve/Update/Delete: `GET/PATCH/DELETE /api/products/{id}/` (increment `views_count` on GET).
-   - [ ] Ad activation endpoints: `POST /api/products/{id}/ad/activate`, `POST /api/products/{id}/ad/deactivate`.
-   - [ ] Register routes in `apps.products.urls`.
-   - [ ] Add search and filter and sort endpoints too
-   - 
-   
-
-
-4) Docs & schema
-   - [ ] Update this doc once endpoints are added.
-   - [ ] Update postman collection.
-
+**Response (200 OK):**
+```json
+{
+  "id": 1,
+  "user_full_name_en": "Ahmed Al Balushi",
+  "user_full_name_ar": "أحمد البلوشي",
+  "category_name_en": "Electronics",
+  "category_name_ar": "إلكترونيات",
+  "subcategory_name_en": "Phones",
+  "subcategory_name_ar": "هواتف",
+  "name_en": "iPhone 14",
+  "name_ar": "آيفون 14",
+  "governorate": "Muscat",
+  "wilayat": "Muscat",
+  "image_urls": [
+    {
+      "url": "https://ik.imagekit.io/...",
+      "fileId": "abc123..."
+    }
+  ],
+  "price": "350.00",
+  "description": "Brand new iPhone 14 with warranty.",
+  "contact_phone": "+96891234567",
+  "whatsapp_url": "https://wa.me/96891234567"
+}
+```
 
 ---
 
+### 2. Create Product
+**Endpoint:** `POST /api/products/`
+
+**Description:** Create a new product listing.
+
+**Permissions:** Authenticated users only
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body (Form Data):**
+```
+category: 1
+subcategory: 10 (optional)
+name_en: "iPhone 14" (optional)
+name_ar: "آيفون 14" (required)
+governorate: "Muscat" (required)
+wilayat: "Muscat" (required)
+price: 350.00 (required)
+description: "Brand new iPhone 14." (required)
+contact_phone: "+96891234567" (required)
+images: [<file1>, <file2>, ...] (optional, max 5)
+```
+
+**Field Requirements:**
+- **Required:** `name_ar`, `category`, `governorate`, `wilayat`, `price`, `description`, `contact_phone`
+- **Optional:** `name_en`, `subcategory`, `images`
+- **Images:** Maximum 5 images allowed
+- **Phone Format:** Must be Omani format `+968XXXXXXXX`
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "user_full_name_en": "Ahmed Al Balushi",
+  "user_full_name_ar": "أحمد البلوشي",
+  "category_name_en": "Electronics",
+  "category_name_ar": "إلكترونيات",
+  "subcategory_name_en": "Phones",
+  "subcategory_name_ar": "هواتف",
+  "name_en": "iPhone 14",
+  "name_ar": "آيفون 14",
+  "governorate": "Muscat",
+  "wilayat": "Muscat",
+  "image_urls": [
+    {
+      "url": "https://ik.imagekit.io/...",
+      "fileId": "abc123..."
+    }
+  ],
+  "price": "350.00",
+  "description": "Brand new iPhone 14.",
+  "contact_phone": "+96891234567",
+  "whatsapp_url": "https://wa.me/96891234567"
+}
+```
+
+**Validation Errors (400 Bad Request):**
+```json
+{
+  "subcategory": ["This subcategory does not belong to the selected category."]
+}
+```
+```json
+{
+  "wilayat": ["Muttrah is not valid for Muscat"]
+}
+```
+```json
+{
+  "images": ["You can upload up to 5 images only."]
+}
+```
+```json
+{
+  "contact_phone": ["Enter a valid Omani phone number (+968XXXXXXXX)."]
+}
+```
+
+**Authentication Error (401 Unauthorized):**
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+---
+
+### 3. Retrieve Product Details
+**Endpoint:** `GET /api/products/{id}/`
+
+**Description:** Retrieve full product details. **Note:** Views count is automatically incremented with each request.
+
+**Permissions:** Public
+
+**Response (200 OK):**
+```json
+{
+  "id": 1,
+  "user_full_name_en": "Ahmed Al Balushi",
+  "user_full_name_ar": "أحمد البلوشي",
+  "category_name_en": "Electronics",
+  "category_name_ar": "إلكترونيات",
+  "subcategory_name_en": "Phones",
+  "subcategory_name_ar": "هواتف",
+  "name_en": "iPhone 14",
+  "name_ar": "آيفون 14",
+  "governorate": "Muscat",
+  "wilayat": "Muscat",
+  "image_urls": [
+    {
+      "url": "https://ik.imagekit.io/...",
+      "fileId": "abc123..."
+    }
+  ],
+  "price": "350.00",
+  "description": "Brand new iPhone 14 with warranty.",
+  "contact_phone": "+96891234567",
+  "whatsapp_url": "https://wa.me/96891234567"
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Not found."
+}
+```
+
+---
+
+## Error Responses
+
+### Standard Error Format
+All validation errors follow Django REST Framework's standard format:
+
+```json
+{
+  "field_name": ["Error message for this field."],
+  "another_field": ["Another error message."]
+}
+```
+
+### Common HTTP Status Codes
+
+| Code | Meaning | When It Occurs |
+|------|---------|----------------|
+| 200 | OK | Successful GET request |
+| 201 | Created | Successful POST request |
+| 204 | No Content | Successful DELETE request |
+| 400 | Bad Request | Validation errors, malformed data |
+| 401 | Unauthorized | Missing or invalid authentication credentials |
+| 403 | Forbidden | Authenticated but lacking permissions |
+| 404 | Not Found | Resource doesn't exist |
+
+---
+
+## Notes & Best Practices
+
+1. **Views Count:** The `views_count` field is automatically incremented each time a product detail is accessed via `GET /api/products/{id}/`. You don't need to manually update it.
+
+2. **Image Upload:** Images are uploaded to ImageKit and stored as a list of objects with `url` and `fileId`. Maximum 5 images per product.
+
+3. **Phone Number:** Contact phone must be in Omani format (`+968XXXXXXXX`). The WhatsApp URL is automatically generated from this number.
+
+4. **Governorate/Wilayat Validation:** The system validates that the wilayat belongs to the selected governorate. Invalid combinations will be rejected.
+
+5. **Subcategory Validation:** If a subcategory is provided, it must belong to the selected category.
+
+6. **Search Functionality:** The search parameter searches across:
+   - Product names (Arabic and English)
+   - Category names (Arabic and English)
+   - Subcategory names (Arabic and English)
+
+7. **Multiple Filters:** You can combine multiple query parameters for complex filtering:
+   ```
+   GET /api/products/?category__name_ar=إلكترونيات&governorate=Muscat&ordering=-price
+   ```
+
+---
+
+## Future Enhancements (Planned)
+
+- **Ad System:** Promote products as featured ads
+- **Update/Delete Products:** PATCH and DELETE endpoints for product owners
+- **Advanced Filtering:** Price range filters, date range filters
+- **Pagination:** For large product lists
+- **Favorites/Bookmarks:** User-specific product collections

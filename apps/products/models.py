@@ -34,7 +34,7 @@ class Product(models.Model):
     subcategory = models.ForeignKey("SubCategory", on_delete=models.SET_NULL, null=True, blank=True, related_name="products")
 
     name_en = models.CharField(max_length=255, blank=True, null=True, validators=[validate_name_en])
-    name_ar = models.CharField(max_length=255, validators=[validate_name_ar])  # required
+    name_ar = models.CharField(max_length=255,blank=False, null=False, validators=[validate_name_ar])  # required
 
     governorate = models.CharField(
         max_length=50,
@@ -42,12 +42,12 @@ class Product(models.Model):
     )
     wilayat = models.CharField(max_length=50)
 
-    image_urls = models.JSONField(default=list, blank=True)  # stores list of uploaded URLs
+    image_urls = models.JSONField(default=list, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     description = models.TextField()
     posted_at = models.DateTimeField(default=timezone.now)
     views_count = models.PositiveIntegerField(default=0)
-    contact_phone = models.CharField(max_length=20, validators=[validate_omani_phone])
+    contact_phone = models.CharField(max_length=20, validators=[validate_omani_phone]) # will check is new one or use user phone
 
     def clean(self):
         """Ensure wilayat belongs to the selected governorate."""

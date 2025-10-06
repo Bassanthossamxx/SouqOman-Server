@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
-from .models import Category, SubCategory, Product, ProductImage
+from .models import Category, SubCategory, Product, ProductImage , AdRequest
 from core.choices import WILAYAT_MAP
 
 
@@ -70,8 +70,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "whatsapp_url",
             "images",
             "image_urls",
+            "ad",
         ]
-        read_only_fields = ["id", "user_full_name_en", "user_full_name_ar", "image_urls", "whatsapp_url"]
+        read_only_fields = ["id", "user_full_name_en", "user_full_name_ar", "image_urls", "whatsapp_url","ad"]
 
     def get_whatsapp_url(self, obj):
         return obj.whatsapp_url
@@ -108,3 +109,19 @@ class ProductSerializer(serializers.ModelSerializer):
 
         product.refresh_from_db()
         return product
+
+class AdRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdRequest
+        fields = ["id", "product", "is_approved", "created_at"]
+        read_only_fields = ["id", "is_approved", "created_at"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        product = validated_data["product"]
+
+        if AdRequest.objects.filter(user=user, product=product).exists():
+            raise serializers.ValidationError("You already requested an ad for this product.")
+
+        return AdRequest.objects.create(user=user, product=product)
+

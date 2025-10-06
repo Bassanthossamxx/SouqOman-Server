@@ -5,6 +5,8 @@ from .views import (
     SubCategoryListCreateView,
     ProductListCreateView,
     ProductDetailView,
+AdRequestCreateView,
+AdVerifyView
 )
 
 urlpatterns = [
@@ -18,4 +20,7 @@ urlpatterns = [
     # Products
     path("products/", ProductListCreateView.as_view(), name="product-list-create"),
     path("products/<int:pk>/", ProductDetailView.as_view(), name="product-detail"),
+    # Ad Requests
+    path("ads/request/", AdRequestCreateView.as_view(), name="ad-request"),
+    path("ads/verify/<int:pk>/", AdVerifyView.as_view(), name="ad-verify"),
 ]

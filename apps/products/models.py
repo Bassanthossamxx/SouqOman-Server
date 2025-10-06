@@ -47,6 +47,7 @@ class Product(models.Model):
     posted_at = models.DateTimeField(default=timezone.now)
     views_count = models.PositiveIntegerField(default=0)
     contact_phone = models.CharField(max_length=20, validators=[validate_omani_phone])
+    ad = models.BooleanField(default=False, help_text="True if product is a verified paid ad")
 
     def clean(self):
         if self.governorate:
@@ -63,7 +64,6 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name_ar
-
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
@@ -86,3 +86,15 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name_ar}"
+
+class AdRequest(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ad_requests")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="ad_requests")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("user", "product")
+
+    def __str__(self):
+        return f"{self.user.full_name_en} requested Ad for {self.product.name_ar}"

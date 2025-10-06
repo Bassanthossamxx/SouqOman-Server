@@ -4,10 +4,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Category, SubCategory, Product
+from .models import Category, SubCategory, Product , AdRequest
 from .serializers import (
     CategorySerializer, CategoryDetailSerializer,
-    SubCategorySerializer, ProductSerializer
+    SubCategorySerializer, ProductSerializer , AdRequestSerializer
 )
 from core.permissions import IsSuperUserOrReadOnly
 from .filters import ProductFilter
@@ -62,3 +62,27 @@ class ProductDetailView(generics.RetrieveAPIView):
         instance.save(update_fields=["views_count"])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+# views.py
+
+class AdRequestCreateView(generics.CreateAPIView):
+    queryset = AdRequest.objects.all()
+    serializer_class = AdRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class AdVerifyView(generics.UpdateAPIView):
+    queryset = AdRequest.objects.all()
+    serializer_class = AdRequestSerializer
+    permission_classes = [IsSuperUserOrReadOnly]
+
+    def patch(self, request, *args, **kwargs):
+        ad_request = self.get_object()
+        product = ad_request.product
+
+        ad_request.is_approved = True
+        ad_request.save()
+        product.ad = True
+        product.save(update_fields=["ad"])
+
+        return Response({"message": f"Product '{product.name_ar}' marked as Ad."}, status=status.HTTP_200_OK)

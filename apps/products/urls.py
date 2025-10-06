@@ -3,6 +3,8 @@ from .views import (
     CategoryListCreateView,
     CategoryDetailView,
     SubCategoryListCreateView,
+    ProductListCreateView,
+    ProductDetailView,
 )
 
 urlpatterns = [
@@ -12,4 +14,8 @@ urlpatterns = [
 
     # SubCategories "admin endpoint"
     path("subcategories/", SubCategoryListCreateView.as_view(), name="subcategory-list-create"),
+
+    # Products
+    path("products/", ProductListCreateView.as_view(), name="product-list-create"),
+    path("products/<int:pk>/", ProductDetailView.as_view(), name="product-detail"),
 ]

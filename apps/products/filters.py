@@ -9,7 +9,6 @@ from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 class ProductFilter(django_filters.FilterSet):
     """
     Supported query params:
-    - name: string, matches Product name in EN or AR (icontains)
     - min_price: number, price >= min_price
     - max_price: number, price <= max_price
     - category: string, matches Category name in EN or AR (icontains)
@@ -17,8 +16,6 @@ class ProductFilter(django_filters.FilterSet):
     - wilayat: string, accepts EN or AR (partial EN icontains or AR exact/partial to its EN key)
     - governorate: string, accepts EN or AR (partial EN icontains or AR exact/partial to its EN key)
     """
-
-    name = django_filters.CharFilter(method="filter_name")
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
     category = django_filters.CharFilter(method="filter_category")
@@ -29,7 +26,6 @@ class ProductFilter(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = [
-            "name",
             "wilayat",
             "governorate",
             "min_price",
@@ -37,11 +33,6 @@ class ProductFilter(django_filters.FilterSet):
             "category",
             "subcategory",
         ]
-
-    def filter_name(self, queryset, name, value):
-        if not value:
-            return queryset
-        return queryset.filter(Q(name_en__icontains=value) | Q(name_ar__icontains=value))
 
     def filter_category(self, queryset, name, value):
         if not value:

@@ -67,13 +67,21 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="products/")
+    # Make image optional; we'll upload to Cloudinary and then clear/delete the local file
+    image = models.ImageField(upload_to="products/", blank=True, null=True)
     url = models.URLField(blank=True)
 
     def save(self, *args, **kwargs):
+        # On create, if an image file is present and no URL yet, upload to Cloudinary
         if self.image and not self.url:
             upload_result = cloudinary.uploader.upload(self.image)
             self.url = upload_result.get("secure_url")
+            # Remove local file to avoid storing media on the device
+            try:
+                self.image.delete(save=False)
+            except Exception:
+                pass
+            self.image = None
         super().save(*args, **kwargs)
 
     def __str__(self):

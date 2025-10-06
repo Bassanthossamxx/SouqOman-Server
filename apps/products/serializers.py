@@ -27,7 +27,7 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ["id", "url"]
+        fields = [ "url"]
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -45,6 +45,8 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name_ar = serializers.CharField(source="category.name_ar", read_only=True)
     subcategory_name_en = serializers.CharField(source="subcategory.name_en", read_only=True)
     subcategory_name_ar = serializers.CharField(source="subcategory.name_ar", read_only=True)
+    # Accept subcategory ID on create/update (optional)
+    subcategory = serializers.PrimaryKeyRelatedField(queryset=SubCategory.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Product
@@ -55,6 +57,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "category",
             "category_name_en",
             "category_name_ar",
+            "subcategory",  # include writable field
             "subcategory_name_en",
             "subcategory_name_ar",
             "name_en",

@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 from core.validators import validate_omani_phone, validate_name_ar, validate_name_en
 
@@ -29,7 +30,7 @@ class SubCategory(models.Model):
 
 
 class Product(models.Model):
-    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="products")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="products")
     category = models.ForeignKey("Category", on_delete=models.CASCADE, related_name="products")
     subcategory = models.ForeignKey("SubCategory", on_delete=models.SET_NULL, null=True, blank=True, related_name="products")
 

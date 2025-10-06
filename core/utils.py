@@ -7,33 +7,23 @@ imagekit = ImageKit(
     url_endpoint=settings.IMAGEKIT_URL_ENDPOINT,
 )
 
-def upload_to_imagekit(file_obj, filename=None):
+def upload_to_imagekit(file_obj, filename):
     """
-    Upload file_obj (InMemoryUploadedFile / UploadedFile) to ImageKit.
-    Returns a dict: {"url": "...", "fileId": "..."} or None on failure.
+    Upload image to ImageKit and return dict with url and fileId.
+
+    Args:
+        file_obj: File object to upload
+        filename: Name for the uploaded file
+
+    Returns:
+        dict: {"url": str, "fileId": str} or None if upload fails
     """
     try:
-        fname = filename or getattr(file_obj, "name", "upload")
-        resp = imagekit.upload(file=file_obj, file_name=fname)
-        # response contains "url" and "fileId" (depending on ImageKit python client)
+        upload = imagekit.upload(file=file_obj, file_name=filename)
         return {
-            "url": resp.get("url"),
-            "fileId": resp.get("fileId") or resp.get("file_id")  # try both keys
+            "url": upload.get("url"),
+            "fileId": upload.get("fileId")
         }
     except Exception as e:
-        # you may want to log instead of print
-        print("Image upload failed:", e)
+        print(f"ImageKit upload failed for {filename}: {e}")
         return None
-
-def delete_from_imagekit(file_id):
-    """
-    Delete file by fileId (if available). Returns True on success, False otherwise.
-    """
-    if not file_id:
-        return False
-    try:
-        imagekit.delete_file(file_id)
-        return True
-    except Exception as e:
-        print("Image delete failed:", e)
-        return False

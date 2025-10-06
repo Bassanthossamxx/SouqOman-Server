@@ -25,6 +25,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "django_filters",
     "drf_spectacular",
     "django.contrib.admin",
     "django.contrib.auth",

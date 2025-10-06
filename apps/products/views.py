@@ -70,6 +70,14 @@ class AdRequestCreateView(generics.CreateAPIView):
     serializer_class = AdRequestSerializer
     permission_classes = [IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        data = serializer.data
+        message = "Ad request successful. One of our team will contact you via phone or WhatsApp."
+        return Response({**data, "message": message}, status=status.HTTP_201_CREATED)
+
 
 class AdVerifyView(generics.UpdateAPIView):
     queryset = AdRequest.objects.all()

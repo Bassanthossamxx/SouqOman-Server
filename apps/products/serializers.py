@@ -113,8 +113,8 @@ class ProductSerializer(serializers.ModelSerializer):
 class AdRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdRequest
-        fields = ["id", "product", "is_approved", "created_at"]
-        read_only_fields = ["id", "is_approved", "created_at"]
+        fields = ["id", "product", "is_approved"]
+        read_only_fields = ["id", "is_approved"]
 
     def create(self, validated_data):
         user = self.context["request"].user

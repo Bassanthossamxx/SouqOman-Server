@@ -11,6 +11,7 @@
 2. [Category Endpoints](#category-endpoints)
 3. [SubCategory Endpoints](#subcategory-endpoints)
 4. [Product Endpoints](#product-endpoints)
+5. [Ad Request Endpoints](#ad-request-endpoints)
 
 ---
 
@@ -710,6 +711,52 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 ```json
 {
   "detail": "Not found."
+}
+```
+
+---
+
+## Ad Request Endpoints
+
+### 1. Create Ad Request
+**Endpoint:** `POST /api/ads/request/`
+
+**Description:** Submit a request to mark a product as an ad. Each user can request an ad for a product only once.
+
+**Permissions:** Authenticated users only
+
+**Request Headers:**
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "product": 123
+}
+```
+
+**Field Requirements:**
+- **product** (required): Product ID for which the ad request is being made
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "product": 123,
+  "is_approved": false,
+  "created_at": "2025-10-06T12:34:56Z",
+  "message": "Ad request successful. One of our team will contact you via phone or WhatsApp."
+}
+```
+**Note:** Upon successful ad request, one of our team will contact you via phone or WhatsApp.
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "non_field_errors": ["You already requested an ad for this product."]
 }
 ```
 

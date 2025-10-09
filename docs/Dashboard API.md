@@ -1,17 +1,17 @@
 # Dashboard API Documentation
 
-> **Base URL**: `/api/dashboard/`  
-> **Authentication**: JWT Bearer Token (Required)  
-> **Authorization**: Superuser access only (`is_superuser = true`)
+> Base URL: `/dashboard/`
+> Authentication: JWT Bearer Token (Required)
+> Authorization: Superuser access only (`is_superuser = true`)
 
 ---
 
-## 📋 Quick Reference
+## Quick Reference
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/products/` | GET | List all products (all statuses) |
-| `/products/{id}/approve/` | PATCH | Approve pending product |
+| `/products/{id}/approve/` | PATCH or PUT | Approve pending product (no body required) |
 | `/ads/` | GET | List all ad requests |
 | `/ads/{id}/approve/` | PATCH | Approve ad request |
 | `/users/` | GET | List all users |
@@ -27,9 +27,9 @@
 
 | | |
 |---|---|
-| **Endpoint** | `GET /api/dashboard/products/` |
-| **Auth Required** | Yes (Superuser) |
-| **Request Body** | None |
+| Endpoint | `GET /dashboard/products/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
 
 #### Query Parameters
 
@@ -38,19 +38,19 @@
 | `search` | string | No | Search in product name, category, subcategory | `?search=laptop` |
 | `category` | integer | No | Filter by category ID | `?category=5` |
 | `subcategory` | integer | No | Filter by subcategory ID | `?subcategory=12` |
-| `status` | string | No | Filter by status: `active`, `pending`, `deleted` | `?status=pending` |
+| `status` | string | No | Filter by status: `active`, `pending`, `inactive` | `?status=pending` |
 | `min_price` | decimal | No | Minimum price | `?min_price=100` |
 | `max_price` | decimal | No | Maximum price | `?max_price=1000` |
 | `ordering` | string | No | Sort: `price`, `-price`, `posted_at`, `-posted_at`, `views_count`, `-views_count` | `?ordering=-posted_at` |
 
 #### Response
 
-**Status**: `200 OK`
+Status: `200 OK`
 
 ```json
 {
   "count": 150,
-  "next": "http://localhost:8000/api/dashboard/products/?page=2",
+  "next": "http://localhost:8000/dashboard/products/?page=2",
   "previous": null,
   "results": [
     {
@@ -95,31 +95,15 @@
 }
 ```
 
-#### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `count` | integer | Total number of products |
-| `next` | string/null | URL to next page |
-| `previous` | string/null | URL to previous page |
-| `results` | array | Array of product objects |
-
-#### Errors
-
-| Status | Description |
-|--------|-------------|
-| `401` | Missing or invalid authentication token |
-| `403` | User is not a superuser |
-
 ---
 
 ### Approve Pending Product
 
 | | |
 |---|---|
-| **Endpoint** | `PATCH /api/dashboard/products/{id}/approve/` |
-| **Auth Required** | Yes (Superuser) |
-| **Request Body** | None |
+| Endpoint | `PATCH /dashboard/products/{id}/approve/` or `PUT /dashboard/products/{id}/approve/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
 
 #### Path Parameters
 
@@ -129,7 +113,7 @@
 
 #### Response
 
-**Status**: `200 OK`
+Status: `200 OK`
 
 ```json
 {
@@ -153,13 +137,13 @@
 
 | | |
 |---|---|
-| **Endpoint** | `GET /api/dashboard/ads/` |
-| **Auth Required** | Yes (Superuser) |
-| **Request Body** | None |
+| Endpoint | `GET /dashboard/ads/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
 
 #### Response
 
-**Status**: `200 OK`
+Status: `200 OK`
 
 ```json
 [
@@ -185,35 +169,15 @@
 ]
 ```
 
-#### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | integer | Ad request ID |
-| `user` | object | User who requested the ad |
-| `product` | object | Product to be advertised |
-| `duration_preference` | string | User's preferred duration |
-| `requested_at` | datetime | When the request was made |
-| `status` | string | Request status: `pending`, `approved`, `rejected` |
-| `approved_by` | object/null | Admin who approved (if approved) |
-| `approved_at` | datetime/null | When it was approved |
-
-#### Errors
-
-| Status | Description |
-|--------|-------------|
-| `401` | Missing or invalid authentication token |
-| `403` | User is not a superuser |
-
 ---
 
 ### Approve Ad Request
 
 | | |
 |---|---|
-| **Endpoint** | `PATCH /api/dashboard/ads/{id}/approve/` |
-| **Auth Required** | Yes (Superuser) |
-| **Content-Type** | `application/json` |
+| Endpoint | `PATCH /dashboard/ads/{id}/approve/` |
+| Auth Required | Yes (Superuser) |
+| Content-Type | `application/json` |
 
 #### Path Parameters
 
@@ -223,14 +187,14 @@
 
 #### Request Body (Choose One Option)
 
-**Option 1: Duration in Days**
+Option 1: Duration in Days
 ```json
 {
   "duration_days": 30
 }
 ```
 
-**Option 2: Specific Dates**
+Option 2: Specific Dates
 ```json
 {
   "ad_start": "2025-10-09T00:00:00",
@@ -238,33 +202,15 @@
 }
 ```
 
-#### Request Body Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `duration_days` | integer | Option 1 | Number of days for ad (e.g., 30, 60, 90) |
-| `ad_start` | datetime | Option 2 | Ad start date (ISO 8601 format) |
-| `ad_end` | datetime | Option 2 | Ad end date (ISO 8601 format) |
-
 #### Response
 
-**Status**: `200 OK`
+Status: `200 OK`
 
 ```json
 {
   "message": "Product 'حاسوب ديل' marked as Ad from 2025-10-09 to 2025-11-09."
 }
 ```
-
-#### Errors
-
-| Status | Description | Response Example |
-|--------|-------------|------------------|
-| `400` | Missing duration or invalid data | `{"error": "Provide duration_days or ad_end"}` |
-| `400` | Invalid duration value | `{"error": "duration_days must be an integer"}` |
-| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
-| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
-| `404` | Ad request not found | `{"detail": "Not found."}` |
 
 ---
 
@@ -274,9 +220,9 @@
 
 | | |
 |---|---|
-| **Endpoint** | `GET /api/dashboard/users/` |
-| **Auth Required** | Yes (Superuser) |
-| **Request Body** | None |
+| Endpoint | `GET /dashboard/users/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
 
 #### Query Parameters
 
@@ -292,7 +238,7 @@
 ```json
 {
   "count": 245,
-  "next": "http://localhost:8000/api/dashboard/users/?page=2",
+  "next": "http://localhost:8000/dashboard/users/?page=2",
   "previous": null,
   "results": [
     {
@@ -343,9 +289,9 @@
 
 | | |
 |---|---|
-| **Endpoint** | `GET /api/dashboard/users/{id}/` |
-| **Auth Required** | Yes (Superuser) |
-| **Request Body** | None |
+| Endpoint | `GET /dashboard/users/{id}/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
 
 #### Path Parameters
 
@@ -395,9 +341,9 @@
 
 | | |
 |---|---|
-| **Endpoint** | `PATCH /api/dashboard/users/{id}/` |
-| **Auth Required** | Yes (Superuser) |
-| **Content-Type** | `application/json` |
+| Endpoint | `PATCH /dashboard/users/{id}/` |
+| Auth Required | Yes (Superuser) |
+| Content-Type | `application/json` |
 
 #### Path Parameters
 
@@ -473,9 +419,9 @@
 
 | | |
 |---|---|
-| **Endpoint** | `DELETE /api/dashboard/users/{id}/` |
-| **Auth Required** | Yes (Superuser) |
-| **Request Body** | None |
+| Endpoint | `DELETE /dashboard/users/{id}/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
 
 #### Path Parameters
 
@@ -519,101 +465,3 @@ Authorization: Bearer <your_access_token>
 | `403` | Not a superuser | `{"detail": "You do not have permission to perform this action."}` |
 
 ---
-
-## 📊 Common Response Formats
-
-### Paginated List Response
-
-```json
-{
-  "count": 245,
-  "next": "http://localhost:8000/api/dashboard/users/?page=2",
-  "previous": null,
-  "results": [...]
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `count` | integer | Total number of items |
-| `next` | string/null | URL to next page (null if last page) |
-| `previous` | string/null | URL to previous page (null if first page) |
-| `results` | array | Array of result objects |
-
-### Success Message Response
-
-```json
-{
-  "message": "Operation completed successfully"
-}
-```
-
-### Validation Error Response
-
-```json
-{
-  "field_name": ["Error message describing the issue."],
-  "another_field": ["Another error message."]
-}
-```
-
----
-
-## 💡 Usage Examples
-
-### Example 1: List Pending Products
-
-```bash
-GET /api/dashboard/products/?status=pending&ordering=-posted_at
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
-```
-
-### Example 2: Approve Product
-
-```bash
-PATCH /api/dashboard/products/45/approve/
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
-```
-
-### Example 3: Search Users
-
-```bash
-GET /api/dashboard/users/?search=Mohammed&ordering=-date_joined
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
-```
-
-### Example 4: Grant Extra Posts
-
-```bash
-PATCH /api/dashboard/users/12/
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
-Content-Type: application/json
-
-{
-  "extra_monthly_posts": 10
-}
-```
-
-### Example 5: Approve Ad with 30-Day Duration
-
-```bash
-PATCH /api/dashboard/ads/15/approve/
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
-Content-Type: application/json
-
-{
-  "duration_days": 30
-}
-```
-
-### Example 6: Deactivate User
-
-```bash
-PATCH /api/dashboard/users/12/
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
-Content-Type: application/json
-
-{
-  "is_active": false
-}
-```

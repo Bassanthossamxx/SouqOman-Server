@@ -14,3 +14,9 @@ class IsOwnerOrSuperUser(permissions.BasePermission):
     """Allow owners or superusers to edit/delete"""
     def has_object_permission(self, request, view, obj):
         return request.user.is_superuser or obj.user == request.user
+
+class IsSuperUser(BasePermission):
+    """Require authenticated superuser for all methods (no public read)."""
+    def has_permission(self, request, view):
+        user = getattr(request, "user", None)
+        return bool(user and user.is_authenticated and user.is_superuser)

@@ -221,6 +221,6 @@ DATABASE_URL=postgres://postgres:password@localhost:5432/souqoman_db
 Make sure the database exists before running migrations.
 
 ---
-## 9. License & Credits
+## 8. License & Credits
 
 All rights reserved to **@bassanthossamxx**

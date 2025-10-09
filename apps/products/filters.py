@@ -15,6 +15,7 @@ class ProductFilter(django_filters.FilterSet):
     - subcategory: string, matches SubCategory name in EN or AR (icontains)
     - wilayat: string, accepts EN or AR (partial EN icontains or AR exact/partial to its EN key)
     - governorate: string, accepts EN or AR (partial EN icontains or AR exact/partial to its EN key)
+    - status: string, one of Product.STATUS_* values (admin usage)
     """
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
@@ -22,6 +23,7 @@ class ProductFilter(django_filters.FilterSet):
     subcategory = django_filters.CharFilter(method="filter_subcategory")
     wilayat = django_filters.CharFilter(method="filter_wilayat")
     governorate = django_filters.CharFilter(method="filter_governorate")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="exact")
 
     class Meta:
         model = Product
@@ -32,6 +34,7 @@ class ProductFilter(django_filters.FilterSet):
             "max_price",
             "category",
             "subcategory",
+            "status",
         ]
 
     def filter_category(self, queryset, name, value):

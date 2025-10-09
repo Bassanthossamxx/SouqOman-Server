@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.products.models import Product, AdRequest
 from apps.products.serializers import ProductSerializer, AdRequestSerializer
 from apps.products.filters import ProductFilter
-from core.permissions import IsSuperUserOrReadOnly
+from core.permissions import IsSuperUser
 from .serializers import UserListSerializer, UserDetailSerializer
 
 User = get_user_model()
@@ -19,7 +19,7 @@ class AdminAllProductsView(generics.ListAPIView):
     """List all products (all statuses) - superuser only"""
     queryset = Product.objects.select_related("user", "category", "subcategory").prefetch_related("images")
     serializer_class = ProductSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
+    permission_classes = [IsSuperUser]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
     search_fields = [
@@ -35,19 +35,23 @@ class AdminApprovePendingProductView(generics.UpdateAPIView):
     """Approve a pending product to make it active"""
     queryset = Product.objects.filter(status=Product.STATUS_PENDING)
     serializer_class = ProductSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
+    permission_classes = [IsSuperUser]
 
     def patch(self, request, *args, **kwargs):
         product = self.get_object()
         product.activate()
         return Response({"message": f"Product '{product.name_ar}' approved and activated."})
 
+    # Some clients use PUT instead of PATCH for action endpoints; accept it and delegate
+    def put(self, request, *args, **kwargs):
+        return self.patch(request, *args, **kwargs)
+
 
 
 class AdminAdRequestListView(generics.ListAPIView):
     """List all ad requests (superuser only), with optional filter for not approved"""
     serializer_class = AdRequestSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
+    permission_classes = [IsSuperUser]
 
     def get_queryset(self):
         queryset = AdRequest.objects.select_related("product", "user")
@@ -61,7 +65,7 @@ class AdminApproveAdRequestView(generics.UpdateAPIView):
     """Approve AdRequest, set ad start and duration."""
     queryset = AdRequest.objects.all()
     serializer_class = AdRequestSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
+    permission_classes = [IsSuperUser]
 
     def patch(self, request, *args, **kwargs):
         ad_request = self.get_object()
@@ -107,7 +111,7 @@ class AdminUserListView(generics.ListAPIView):
     """List all users - superuser only"""
     queryset = User.objects.all()
     serializer_class = UserListSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
+    permission_classes = [IsSuperUser]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = [
         "phone",
@@ -125,7 +129,7 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update or delete a user - superuser only"""
     queryset = User.objects.all()
     serializer_class = UserDetailSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
+    permission_classes = [IsSuperUser]
 
     def delete(self, request, *args, **kwargs):
         user = self.get_object()
@@ -135,4 +139,3 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().delete(request, *args, **kwargs)
-

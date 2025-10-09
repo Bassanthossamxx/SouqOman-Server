@@ -6,6 +6,8 @@ from django.utils import timezone
 from rest_framework import serializers
 from .models import Category, SubCategory, Product, ProductImage, AdRequest
 
+from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
+
 # --- simple category/subcategory serializers ---
 class SubCategorySerializer(serializers.ModelSerializer):
     class Meta:

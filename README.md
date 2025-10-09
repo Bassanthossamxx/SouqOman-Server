@@ -107,11 +107,8 @@ SouqOman-Server/
 │   └── cart/                # Planned
 └── docs/
     ├── authentication api doc.md
-    ├── Authentication System Overview.md
     ├── Products API.md
-    ├── Products&Home Overview.md
-    ├── Dashboard API.md     # NEW: Complete dashboard API documentation
-    ├── Dashboard Migration.md
+    ├── Dashboard API.md     
     └── SouqOman ERD.png
 ```
 
@@ -194,41 +191,11 @@ Visit:
 ## 6. API Endpoints
 
 ### Authentication (`/api/auth/`)
-- `POST /api/auth/register/` - User registration with OTP
-- `POST /api/auth/verify-otp/` - Verify OTP code
-- `POST /api/auth/login/` - Login and get JWT tokens
-- `POST /api/auth/logout/` - Logout and blacklist token
-- `POST /api/auth/token/refresh/` - Refresh access token
-- `GET /api/auth/profile/` - Get user profile
-- `PATCH /api/auth/profile/update/` - Update profile
-- `POST /api/auth/change-password/` - Change password
 
 ### Products (`/api/`)
-- `GET/POST /api/categories/` - List/create categories (superuser for POST)
-- `GET/PATCH/DELETE /api/categories/{id}/` - Category details/update/delete (superuser for modify)
-- `GET/POST /api/subcategories/` - List/create subcategories (superuser for POST)
-- `GET /api/products/` - List active products (with filtering/search/sort)
-- `POST /api/products/` - Create product (authenticated users)
-- `GET /api/products/{id}/` - Product details (auto-increments views)
-- `PATCH /api/products/{id}/` - Update own product (owner or superuser)
-- `DELETE /api/products/{id}/` - Delete own product (owner or superuser)
-- `POST /api/ads/request/` - Request ad promotion (authenticated users)
 
-### Dashboard - Superuser Only (`/api/dashboard/`)
+### Dashboard - Superuser Only (`/dashboard/`)
 
-#### Product Management
-- `GET /api/dashboard/products/` - List ALL products (all statuses: active/pending/deleted)
-- `PATCH /api/dashboard/products/{id}/approve/` - Approve pending product
-
-#### Ad Request Management
-- `GET /api/dashboard/ads/` - List all ad requests
-- `PATCH /api/dashboard/ads/{id}/approve/` - Approve ad request with duration
-
-#### User Management
-- `GET /api/dashboard/users/` - List all users (with search & filtering)
-- `GET /api/dashboard/users/{id}/` - Get user details
-- `PATCH /api/dashboard/users/{id}/` - Update user (grant extra posts, change status)
-- `DELETE /api/dashboard/users/{id}/` - Delete user (protected for superusers)
 
 **For detailed API documentation, see:**
 - `docs/authentication api doc.md` - Authentication endpoints
@@ -236,39 +203,7 @@ Visit:
 - `docs/Dashboard API.md` - **Complete dashboard API documentation for frontend**
 
 ---
-## 7. Features in Detail
-
-### Product Filtering & Search
-Products can be filtered by:
-- Category name (Arabic/English)
-- Subcategory name (Arabic/English)
-- Price (exact match)
-- Governorate and Wilayat
-- Search across product/category/subcategory names
-
-### Sorting Options
-- Price: low to high, high to low
-- Date: newest first, oldest first
-- Views: most viewed, least viewed
-
-### Image Upload
-- Up to 5 images per product
-- Uploaded to Cloudinary cloud storage
-- Automatic secure URL generation
-- Supports multiple image formats
-
-### Location System
-- Governorate/Wilayat validation for Oman
-- Ensures wilayat belongs to selected governorate
-- Predefined choices in `core/choices.py`
-
-### WhatsApp Integration
-- Auto-generates WhatsApp contact links
-- Based on Omani phone number format (+968XXXXXXXX)
-- Phone number validation included
-
----
-## 8. Database Notes
+## 7. Database Notes
 
 The project parses `DATABASE_URL` into Django's database settings. 
 
@@ -286,52 +221,6 @@ DATABASE_URL=postgres://postgres:password@localhost:5432/souqoman_db
 Make sure the database exists before running migrations.
 
 ---
-## 9. Development Workflow
-
-### Running Tests
-```bash
-python manage.py test
-```
-
-### Creating Migrations
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
-
-### Checking System
-```bash
-python manage.py check
-```
-
-### Collecting Static Files (Production)
-```bash
-python manage.py collectstatic
-```
-
----
-## 10. Documentation
-
-The `docs/` directory contains detailed documentation:
-
-- **Authentication System Overview.md** - Authentication flow and architecture
-- **authentication api doc.md** - Complete auth API reference
-- **Products API.md** - Complete products API reference with examples
-- **Products&Home Overview.md** - Product feature specifications
-- **Dashboard API.md** - Complete dashboard API documentation
-- **Dashboard Migration.md** - Steps and notes for dashboard migration
-- **SouqOman ERD.png** - Database entity relationship diagram
-
----
-## 11. Security Notes
-
-- JWT tokens with 6-hour access and 60-day refresh lifetime
-- Token rotation and blacklisting enabled
-- Custom validators for phone numbers and names (Arabic/English)
-- Governorate/Wilayat validation to prevent invalid location data
-- Subcategory-to-category validation
-- Superuser-only access for category/subcategory management
----
-## 12. License & Credits
+## 9. License & Credits
 
 All rights reserved to **@bassanthossamxx**

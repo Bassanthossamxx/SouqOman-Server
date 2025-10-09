@@ -212,6 +212,22 @@ Status: `200 OK`
 }
 ```
 
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `400` | Missing duration or invalid data | `{"error": "Provide duration_days or ad_end"}` |
+| `400` | Invalid duration value | `{"error": "duration_days must be an integer"}` |
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+| `404` | Ad request not found | `{"detail": "Not found."}` |
+| `409` | Ad request already approved (cannot modify) | `{
+  "error": "Ad request is already approved and cannot be modified.",
+  "product": 45,
+  "ad_start": "2025-10-09T00:00:00Z",
+  "ad_end": "2025-11-09T00:00:00Z"
+}` |
+
 ---
 
 ## 👥 User Management
@@ -465,3 +481,4 @@ Authorization: Bearer <your_access_token>
 | `403` | Not a superuser | `{"detail": "You do not have permission to perform this action."}` |
 
 ---
+

@@ -71,6 +71,15 @@ class AdminApproveAdRequestView(generics.UpdateAPIView):
         ad_request = self.get_object()
         product = ad_request.product
 
+        # Block re-approval attempts
+        if ad_request.is_approved:
+            return Response({
+                "error": "Ad request is already approved and cannot be modified.",
+                "product": product.pk,
+                "ad_start": ad_request.ad_start,
+                "ad_end": ad_request.ad_end,
+            }, status=status.HTTP_409_CONFLICT)
+
         ad_start_str = request.data.get("ad_start")
         ad_end_str = request.data.get("ad_end")
         duration_days = request.data.get("duration_days")
@@ -99,7 +108,7 @@ class AdminApproveAdRequestView(generics.UpdateAPIView):
         ad_request.approve(request.user, ad_start, ad_end)
 
         return Response({
-            "message": f"Product '{product.name_ar} - {product.pk}' marked as Ad from {ad_start.date()} to {ad_end.date()}."
+            "message": f"Product '{product.name_ar} - {product.pk}' marked as Ad from {ad_start.date()} to {ad_end.date()}.",
         }, status=200)
 
 

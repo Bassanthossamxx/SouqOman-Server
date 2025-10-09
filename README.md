@@ -1,6 +1,7 @@
 # SouqOman-Server
 
-A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to Cloudinary, and comprehensive filtering/search capabilities.
+A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to Cloudinary, comprehensive filtering/search capabilities, and a powerful admin dashboard for superusers.
+
 ## Postman 
 - Doc : https://documenter.getpostman.com/view/37742819/2sB3QJNASG
 - Collection : https://www.postman.com/bytehive-1150/workspace/mine/collection/37742819-52e9e84a-5c0f-4a56-ac0d-1f3b5be8a7bd?action=share&creator=37742819
@@ -22,7 +23,24 @@ A modular Django + Django REST Framework backend for an OLX‑style classifieds 
   - Sorting by price, date, and view count
   - Auto-incrementing view counter for product details
   - WhatsApp integration for contact
+  - Product status management (active/pending/deleted)
+  - Monthly posting limits with admin override capability
   
+- **Advertisement System**:
+  - Ad request submission by users
+  - Admin approval with flexible duration settings
+  - Automatic ad expiration
+  - Featured product promotion
+
+- **Admin Dashboard** (Superuser Only):
+  - Complete product management (all statuses)
+  - Product approval workflow for pending items
+  - Ad request management and approval
+  - User management (list, view, update, delete)
+  - Grant extra monthly posts to users
+  - Account activation/deactivation
+  - Advanced search and filtering
+
 - **Image Storage**: Cloudinary integration for cloud-based image management
 - **Location System**: Governorate and Wilayat validation for Oman
 - **Database**: PostgreSQL via `DATABASE_URL` (works great with Neon: https://neon.tech)
@@ -32,9 +50,9 @@ A modular Django + Django REST Framework backend for an OLX‑style classifieds 
 ### Planned Features:
 - Shopping cart functionality
 - Order management system
-- Featured ads/promotions
 - User favorites/bookmarks
-- Advanced analytics
+- Advanced analytics and reporting
+- Email notifications
 
 ---
 ## 2. Tech Stack
@@ -72,21 +90,28 @@ SouqOman-Server/
 │   │   ├── admin.py
 │   │   └── migrations/
 │   ├── products/
-│   │   ├── models.py        # Category, SubCategory, Product, ProductImage (Cloudinary-backed)
+│   │   ├── models.py        # Category, SubCategory, Product, ProductImage, AdRequest
 │   │   ├── serializers.py   # Product serializers
-│   │   ├── views.py         # Product CRUD & filtering
+│   │   ├── views.py         # Product CRUD & filtering, Ad requests
 │   │   ├── urls.py          # Product routes
+│   │   ├── filters.py       # Product filtering logic
 │   │   ├── admin.py
 │   │   └── migrations/
-│   ├── orders/              # (Planned)
-│   │   └── ...
-│   └── cart/                # (Planned)
-│       └── ...
+│   ├── dashboard/           # NEW: Admin dashboard (Superuser only)
+│   │   ├── models.py        # No models (uses existing)
+│   │   ├── serializers.py   # User management serializers
+│   │   ├── views.py         # Product/Ad/User management views
+│   │   ├── urls.py          # Dashboard routes
+│   │   └── migrations/
+│   ├── orders/              # Planned
+│   └── cart/                # Planned
 └── docs/
     ├── authentication api doc.md
     ├── Authentication System Overview.md
     ├── Products API.md
     ├── Products&Home Overview.md
+    ├── Dashboard API.md     # NEW: Complete dashboard API documentation
+    ├── Dashboard Migration.md
     └── SouqOman ERD.png
 ```
 
@@ -179,16 +204,36 @@ Visit:
 - `POST /api/auth/change-password/` - Change password
 
 ### Products (`/api/`)
-- `GET/POST /api/categories/` - List/create categories
-- `GET/DELETE /api/categories/{id}/` - Category details/delete
-- `GET/POST /api/subcategories/` - List/create subcategories
-- `GET /api/products/` - List products (with filtering/search/sort)
-- `POST /api/products/` - Create product (authenticated)
+- `GET/POST /api/categories/` - List/create categories (superuser for POST)
+- `GET/PATCH/DELETE /api/categories/{id}/` - Category details/update/delete (superuser for modify)
+- `GET/POST /api/subcategories/` - List/create subcategories (superuser for POST)
+- `GET /api/products/` - List active products (with filtering/search/sort)
+- `POST /api/products/` - Create product (authenticated users)
 - `GET /api/products/{id}/` - Product details (auto-increments views)
+- `PATCH /api/products/{id}/` - Update own product (owner or superuser)
+- `DELETE /api/products/{id}/` - Delete own product (owner or superuser)
+- `POST /api/ads/request/` - Request ad promotion (authenticated users)
+
+### Dashboard - Superuser Only (`/api/dashboard/`)
+
+#### Product Management
+- `GET /api/dashboard/products/` - List ALL products (all statuses: active/pending/deleted)
+- `PATCH /api/dashboard/products/{id}/approve/` - Approve pending product
+
+#### Ad Request Management
+- `GET /api/dashboard/ads/` - List all ad requests
+- `PATCH /api/dashboard/ads/{id}/approve/` - Approve ad request with duration
+
+#### User Management
+- `GET /api/dashboard/users/` - List all users (with search & filtering)
+- `GET /api/dashboard/users/{id}/` - Get user details
+- `PATCH /api/dashboard/users/{id}/` - Update user (grant extra posts, change status)
+- `DELETE /api/dashboard/users/{id}/` - Delete user (protected for superusers)
 
 **For detailed API documentation, see:**
-- `docs/authentication api doc.md`
-- `docs/Products API.md`
+- `docs/authentication api doc.md` - Authentication endpoints
+- `docs/Products API.md` - Products and categories endpoints
+- `docs/Dashboard API.md` - **Complete dashboard API documentation for frontend**
 
 ---
 ## 7. Features in Detail
@@ -273,6 +318,8 @@ The `docs/` directory contains detailed documentation:
 - **authentication api doc.md** - Complete auth API reference
 - **Products API.md** - Complete products API reference with examples
 - **Products&Home Overview.md** - Product feature specifications
+- **Dashboard API.md** - Complete dashboard API documentation
+- **Dashboard Migration.md** - Steps and notes for dashboard migration
 - **SouqOman ERD.png** - Database entity relationship diagram
 
 ---
@@ -288,5 +335,3 @@ The `docs/` directory contains detailed documentation:
 ## 12. License & Credits
 
 All rights reserved to **@bassanthossamxx**
-
----

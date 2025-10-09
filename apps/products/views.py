@@ -118,34 +118,6 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
             instance.soft_delete()
 
 
-class AdminAllProductsView(generics.ListAPIView):
-    """List all products (all statuses) - superuser only"""
-    queryset = Product.objects.select_related("user", "category", "subcategory").prefetch_related("images")
-    serializer_class = ProductSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_class = ProductFilter
-    search_fields = [
-        "name_en", "name_ar",
-        "category__name_en", "category__name_ar",
-        "subcategory__name_en", "subcategory__name_ar"
-    ]
-    ordering_fields = ["price", "posted_at", "views_count"]
-    ordering = ["-posted_at"]
-
-
-class AdminApprovePendingProductView(generics.UpdateAPIView):
-    """Approve a pending product to make it active"""
-    queryset = Product.objects.filter(status=Product.STATUS_PENDING)
-    serializer_class = ProductSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
-
-    def patch(self, request, *args, **kwargs):
-        product = self.get_object()
-        product.activate()
-        return Response({"message": f"Product '{product.name_ar}' approved and activated."})
-
-
 # -------------------------------
 #  AD REQUEST VIEWS
 # -------------------------------
@@ -161,56 +133,3 @@ class AdRequestCreateView(generics.CreateAPIView):
         ad_request = serializer.save()
         msg = "Ad request successful. Our team will contact you soon via phone or WhatsApp."
         return Response({**AdRequestSerializer(ad_request).data, "message": msg}, status=status.HTTP_201_CREATED)
-
-
-class AdminAdRequestListView(generics.ListAPIView):
-    """List all ad requests (superuser only)"""
-    queryset = AdRequest.objects.select_related("product", "user")
-    serializer_class = AdRequestSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
-
-
-class AdminApproveAdRequestView(generics.UpdateAPIView):
-    """Approve AdRequest, set ad start and duration."""
-    queryset = AdRequest.objects.all()
-    serializer_class = AdRequestSerializer
-    permission_classes = [IsSuperUserOrReadOnly]
-
-    def patch(self, request, *args, **kwargs):
-        ad_request = self.get_object()
-        product = ad_request.product
-
-        # input expected: {"duration_days": 30} OR {"ad_start": "...", "ad_end": "..."}
-        ad_start_str = request.data.get("ad_start")
-        ad_end_str = request.data.get("ad_end")
-        duration_days = request.data.get("duration_days")
-
-        if ad_start_str:
-            ad_start = timezone.datetime.fromisoformat(ad_start_str)
-            if timezone.is_naive(ad_start):
-                ad_start = timezone.make_aware(ad_start)
-        else:
-            ad_start = timezone.now()
-
-        if duration_days:
-            try:
-                duration_days = int(duration_days)
-                ad_end = ad_start + timezone.timedelta(days=duration_days)
-            except ValueError:
-                return Response({"error": "duration_days must be an integer"}, status=400)
-        elif ad_end_str:
-            ad_end = timezone.datetime.fromisoformat(ad_end_str)
-            if timezone.is_naive(ad_end):
-                ad_end = timezone.make_aware(ad_end)
-        else:
-            return Response({"error": "Provide duration_days or ad_end"}, status=400)
-
-        # approve
-        ad_request.approve(request.user, ad_start, ad_end)
-        # make sure product is active
-        if product.status != Product.STATUS_ACTIVE:
-            product.activate()
-
-        return Response({
-            "message": f"Product '{product.name_ar}' marked as Ad from {ad_start.date()} to {ad_end.date()}."
-        }, status=200)

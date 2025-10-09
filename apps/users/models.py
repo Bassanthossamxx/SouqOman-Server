@@ -37,6 +37,7 @@ class User(AbstractUser):
         choices=[(gov, gov) for gov in GOVERNORATE_MAP.keys()],
     )
     wilayat = models.CharField(max_length=50)
+    extra_monthly_posts = models.IntegerField(default=0, help_text="extra free posts added by admin for current month")
 
     USERNAME_FIELD = "phone"  # Phone is the login field
     REQUIRED_FIELDS = [

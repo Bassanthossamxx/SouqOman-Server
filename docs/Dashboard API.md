@@ -1,0 +1,619 @@
+# Dashboard API Documentation
+
+> **Base URL**: `/api/dashboard/`  
+> **Authentication**: JWT Bearer Token (Required)  
+> **Authorization**: Superuser access only (`is_superuser = true`)
+
+---
+
+## 📋 Quick Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/products/` | GET | List all products (all statuses) |
+| `/products/{id}/approve/` | PATCH | Approve pending product |
+| `/ads/` | GET | List all ad requests |
+| `/ads/{id}/approve/` | PATCH | Approve ad request |
+| `/users/` | GET | List all users |
+| `/users/{id}/` | GET | Get user details |
+| `/users/{id}/` | PATCH | Update user |
+| `/users/{id}/` | DELETE | Delete user |
+
+---
+
+## 🛍️ Product Management
+
+### List All Products
+
+| | |
+|---|---|
+| **Endpoint** | `GET /api/dashboard/products/` |
+| **Auth Required** | Yes (Superuser) |
+| **Request Body** | None |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `search` | string | No | Search in product name, category, subcategory | `?search=laptop` |
+| `category` | integer | No | Filter by category ID | `?category=5` |
+| `subcategory` | integer | No | Filter by subcategory ID | `?subcategory=12` |
+| `status` | string | No | Filter by status: `active`, `pending`, `deleted` | `?status=pending` |
+| `min_price` | decimal | No | Minimum price | `?min_price=100` |
+| `max_price` | decimal | No | Maximum price | `?max_price=1000` |
+| `ordering` | string | No | Sort: `price`, `-price`, `posted_at`, `-posted_at`, `views_count`, `-views_count` | `?ordering=-posted_at` |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "count": 150,
+  "next": "http://localhost:8000/api/dashboard/products/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 45,
+      "user": {
+        "id": 12,
+        "phone": "96812345678",
+        "full_name_ar": "محمد أحمد",
+        "full_name_en": "Mohammed Ahmed"
+      },
+      "category": {
+        "id": 5,
+        "name_en": "Electronics",
+        "name_ar": "إلكترونيات"
+      },
+      "subcategory": {
+        "id": 12,
+        "name_en": "Laptops",
+        "name_ar": "حواسيب محمولة"
+      },
+      "name_en": "Dell Laptop",
+      "name_ar": "حاسوب ديل",
+      "description_en": "High performance laptop",
+      "description_ar": "حاسوب عالي الأداء",
+      "price": "450.00",
+      "phone": "96898765432",
+      "whatsapp": "96898765432",
+      "images": [
+        {
+          "id": 78,
+          "image": "https://res.cloudinary.com/xxx/image.jpg"
+        }
+      ],
+      "status": "active",
+      "posted_at": "2025-10-09T10:30:00Z",
+      "views_count": 125,
+      "ad": false,
+      "ad_start": null,
+      "ad_end": null
+    }
+  ]
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `count` | integer | Total number of products |
+| `next` | string/null | URL to next page |
+| `previous` | string/null | URL to previous page |
+| `results` | array | Array of product objects |
+
+#### Errors
+
+| Status | Description |
+|--------|-------------|
+| `401` | Missing or invalid authentication token |
+| `403` | User is not a superuser |
+
+---
+
+### Approve Pending Product
+
+| | |
+|---|---|
+| **Endpoint** | `PATCH /api/dashboard/products/{id}/approve/` |
+| **Auth Required** | Yes (Superuser) |
+| **Request Body** | None |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | Product ID to approve |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "message": "Product 'حاسوب ديل' approved and activated."
+}
+```
+
+#### Errors
+
+| Status | Description |
+|--------|-------------|
+| `401` | Missing or invalid authentication token |
+| `403` | User is not a superuser |
+| `404` | Product not found or not in pending status |
+
+---
+
+## 📢 Ad Request Management
+
+### List All Ad Requests
+
+| | |
+|---|---|
+| **Endpoint** | `GET /api/dashboard/ads/` |
+| **Auth Required** | Yes (Superuser) |
+| **Request Body** | None |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+[
+  {
+    "id": 15,
+    "user": {
+      "id": 12,
+      "phone": "96812345678",
+      "full_name_ar": "محمد أحمد",
+      "full_name_en": "Mohammed Ahmed"
+    },
+    "product": {
+      "id": 45,
+      "name_en": "Dell Laptop",
+      "name_ar": "حاسوب ديل"
+    },
+    "duration_preference": "30 days",
+    "requested_at": "2025-10-08T14:20:00Z",
+    "status": "pending",
+    "approved_by": null,
+    "approved_at": null
+  }
+]
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Ad request ID |
+| `user` | object | User who requested the ad |
+| `product` | object | Product to be advertised |
+| `duration_preference` | string | User's preferred duration |
+| `requested_at` | datetime | When the request was made |
+| `status` | string | Request status: `pending`, `approved`, `rejected` |
+| `approved_by` | object/null | Admin who approved (if approved) |
+| `approved_at` | datetime/null | When it was approved |
+
+#### Errors
+
+| Status | Description |
+|--------|-------------|
+| `401` | Missing or invalid authentication token |
+| `403` | User is not a superuser |
+
+---
+
+### Approve Ad Request
+
+| | |
+|---|---|
+| **Endpoint** | `PATCH /api/dashboard/ads/{id}/approve/` |
+| **Auth Required** | Yes (Superuser) |
+| **Content-Type** | `application/json` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | Ad request ID to approve |
+
+#### Request Body (Choose One Option)
+
+**Option 1: Duration in Days**
+```json
+{
+  "duration_days": 30
+}
+```
+
+**Option 2: Specific Dates**
+```json
+{
+  "ad_start": "2025-10-09T00:00:00",
+  "ad_end": "2025-11-09T00:00:00"
+}
+```
+
+#### Request Body Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `duration_days` | integer | Option 1 | Number of days for ad (e.g., 30, 60, 90) |
+| `ad_start` | datetime | Option 2 | Ad start date (ISO 8601 format) |
+| `ad_end` | datetime | Option 2 | Ad end date (ISO 8601 format) |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "message": "Product 'حاسوب ديل' marked as Ad from 2025-10-09 to 2025-11-09."
+}
+```
+
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `400` | Missing duration or invalid data | `{"error": "Provide duration_days or ad_end"}` |
+| `400` | Invalid duration value | `{"error": "duration_days must be an integer"}` |
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+| `404` | Ad request not found | `{"detail": "Not found."}` |
+
+---
+
+## 👥 User Management
+
+### List All Users
+
+| | |
+|---|---|
+| **Endpoint** | `GET /api/dashboard/users/` |
+| **Auth Required** | Yes (Superuser) |
+| **Request Body** | None |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `search` | string | No | Search in phone, email, names, governorate, wilayat | `?search=Mohammed` |
+| `ordering` | string | No | Sort: `date_joined`, `-date_joined`, `email`, `-email`, `phone`, `-phone` | `?ordering=-date_joined` |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "count": 245,
+  "next": "http://localhost:8000/api/dashboard/users/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 12,
+      "phone": "96812345678",
+      "email": "mohammed@example.com",
+      "full_name_ar": "محمد أحمد",
+      "full_name_en": "Mohammed Ahmed",
+      "governorate": "Muscat",
+      "wilayat": "Muscat",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "date_joined": "2025-09-15T10:30:00Z",
+      "extra_monthly_posts": 0
+    }
+  ]
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | User ID |
+| `phone` | string | Phone number (unique) |
+| `email` | string | Email address |
+| `full_name_ar` | string | Full name in Arabic |
+| `full_name_en` | string | Full name in English |
+| `governorate` | string | User's governorate |
+| `wilayat` | string | User's wilayat |
+| `is_active` | boolean | Account is active |
+| `is_staff` | boolean | Has staff privileges |
+| `is_superuser` | boolean | Has superuser privileges |
+| `date_joined` | datetime | Account creation date |
+| `extra_monthly_posts` | integer | Additional free posts for current month |
+
+#### Errors
+
+| Status | Description |
+|--------|-------------|
+| `401` | Missing or invalid authentication token |
+| `403` | User is not a superuser |
+
+---
+
+### Get User Details
+
+| | |
+|---|---|
+| **Endpoint** | `GET /api/dashboard/users/{id}/` |
+| **Auth Required** | Yes (Superuser) |
+| **Request Body** | None |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | User ID |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "id": 12,
+  "phone": "96812345678",
+  "email": "mohammed@example.com",
+  "full_name_ar": "محمد أحمد",
+  "full_name_en": "Mohammed Ahmed",
+  "governorate": "Muscat",
+  "wilayat": "Muscat",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false,
+  "date_joined": "2025-09-15T10:30:00Z",
+  "last_login": "2025-10-09T09:45:00Z",
+  "extra_monthly_posts": 0
+}
+```
+
+#### Additional Fields (vs List)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `last_login` | datetime/null | Last login timestamp |
+
+#### Errors
+
+| Status | Description |
+|--------|-------------|
+| `401` | Missing or invalid authentication token |
+| `403` | User is not a superuser |
+| `404` | User not found |
+
+---
+
+### Update User
+
+| | |
+|---|---|
+| **Endpoint** | `PATCH /api/dashboard/users/{id}/` |
+| **Auth Required** | Yes (Superuser) |
+| **Content-Type** | `application/json` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | User ID to update |
+
+#### Request Body (All Fields Optional)
+
+```json
+{
+  "email": "newemail@example.com",
+  "full_name_ar": "محمد أحمد السعيد",
+  "full_name_en": "Mohammed Ahmed Al Saeed",
+  "governorate": "Muscat",
+  "wilayat": "Bausher",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false,
+  "extra_monthly_posts": 10
+}
+```
+
+#### Updatable Fields
+
+| Field | Type | Description | Validation |
+|-------|------|-------------|------------|
+| `email` | string | Email address | Must be valid email format |
+| `full_name_ar` | string | Full name in Arabic | Only Arabic characters |
+| `full_name_en` | string | Full name in English | Only English characters |
+| `governorate` | string | User's governorate | Must be valid governorate |
+| `wilayat` | string | User's wilayat | Must be valid for the governorate |
+| `is_active` | boolean | Account active status | true/false |
+| `is_staff` | boolean | Staff privileges | true/false |
+| `is_superuser` | boolean | Superuser privileges | true/false |
+| `extra_monthly_posts` | integer | Extra free posts | Non-negative integer |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "id": 12,
+  "phone": "96812345678",
+  "email": "newemail@example.com",
+  "full_name_ar": "محمد أحمد السعيد",
+  "full_name_en": "Mohammed Ahmed Al Saeed",
+  "governorate": "Muscat",
+  "wilayat": "Bausher",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false,
+  "date_joined": "2025-09-15T10:30:00Z",
+  "last_login": "2025-10-09T09:45:00Z",
+  "extra_monthly_posts": 10
+}
+```
+
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `400` | Validation error | `{"email": ["Enter a valid email address."]}` |
+| `400` | Invalid wilayat for governorate | `{"wilayat": ["Bausher is not valid for Dhofar"]}` |
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+| `404` | User not found | `{"detail": "Not found."}` |
+
+---
+
+### Delete User
+
+| | |
+|---|---|
+| **Endpoint** | `DELETE /api/dashboard/users/{id}/` |
+| **Auth Required** | Yes (Superuser) |
+| **Request Body** | None |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | User ID to delete |
+
+#### Response
+
+**Status**: `204 No Content`
+
+No response body returned on success.
+
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+| `403` | Attempting to delete a superuser | `{"error": "Cannot delete a superuser account"}` |
+| `404` | User not found | `{"detail": "Not found."}` |
+
+---
+
+## 🔒 Authentication
+
+All endpoints require JWT Bearer authentication.
+
+#### Request Header Format
+
+```
+Authorization: Bearer <your_access_token>
+```
+
+#### Common Authentication Errors
+
+| Status | Description | Response |
+|--------|-------------|----------|
+| `401` | No token provided | `{"detail": "Authentication credentials were not provided."}` |
+| `401` | Invalid/expired token | `{"detail": "Given token not valid for any token type", "code": "token_not_valid"}` |
+| `403` | Not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+
+---
+
+## 📊 Common Response Formats
+
+### Paginated List Response
+
+```json
+{
+  "count": 245,
+  "next": "http://localhost:8000/api/dashboard/users/?page=2",
+  "previous": null,
+  "results": [...]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `count` | integer | Total number of items |
+| `next` | string/null | URL to next page (null if last page) |
+| `previous` | string/null | URL to previous page (null if first page) |
+| `results` | array | Array of result objects |
+
+### Success Message Response
+
+```json
+{
+  "message": "Operation completed successfully"
+}
+```
+
+### Validation Error Response
+
+```json
+{
+  "field_name": ["Error message describing the issue."],
+  "another_field": ["Another error message."]
+}
+```
+
+---
+
+## 💡 Usage Examples
+
+### Example 1: List Pending Products
+
+```bash
+GET /api/dashboard/products/?status=pending&ordering=-posted_at
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+### Example 2: Approve Product
+
+```bash
+PATCH /api/dashboard/products/45/approve/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+### Example 3: Search Users
+
+```bash
+GET /api/dashboard/users/?search=Mohammed&ordering=-date_joined
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+### Example 4: Grant Extra Posts
+
+```bash
+PATCH /api/dashboard/users/12/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+Content-Type: application/json
+
+{
+  "extra_monthly_posts": 10
+}
+```
+
+### Example 5: Approve Ad with 30-Day Duration
+
+```bash
+PATCH /api/dashboard/ads/15/approve/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+Content-Type: application/json
+
+{
+  "duration_days": 30
+}
+```
+
+### Example 6: Deactivate User
+
+```bash
+PATCH /api/dashboard/users/12/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+Content-Type: application/json
+
+{
+  "is_active": false
+}
+```

@@ -1,4 +1,4 @@
-# Products API Documentation
+# Products API Documentation - User Endpoints
 
 **Base URL:** `/api/`
 
@@ -12,6 +12,7 @@
 3. [SubCategory Endpoints](#subcategory-endpoints)
 4. [Product Endpoints](#product-endpoints)
 5. [Ad Request Endpoints](#ad-request-endpoints)
+6. [Data Reference](#data-reference)
 
 ---
 
@@ -20,13 +21,16 @@
 - **Authentication Method:** JWT tokens via Authorization header
 - **Header Format:** `Authorization: Bearer <access_token>`
 - **Permissions:**
-  - **Categories & Subcategories:** 
+  - **Categories & Subcategories:**
     - Read (GET): Public access
-    - Write (POST/DELETE): Superuser only
   - **Products:**
-    - List (GET /products/): Public access (no authentication required)
-    - Create (POST /products/): Authenticated users only
-    - Retrieve (GET /products/{id}/): Public access (no authentication required)
+    - List (GET): Public access
+    - Create (POST): Authenticated users only
+    - Retrieve (GET): Public access
+    - Update (PUT/PATCH): Owner only
+    - Delete (DELETE): Owner only (soft delete)
+  - **Ad Requests:**
+    - Create (POST): Authenticated users only
 
 ---
 
@@ -56,6 +60,11 @@
     "id": 2,
     "name_en": "Fashion",
     "name_ar": "أزياء"
+  },
+  {
+    "id": 3,
+    "name_en": "Vehicles",
+    "name_ar": "مركبات"
   }
 ]
 ```
@@ -67,87 +76,7 @@
 
 ---
 
-### 2. Create Category
-**Endpoint:** `POST /api/categories/`
-
-**Description:** Create a new category.
-
-**Permissions:** Superuser only
-
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name_en": "Electronics",
-  "name_ar": "إلكترونيات"
-}
-```
-
-**Field Requirements:**
-- **name_en** (required): English name, must contain only English letters and spaces, must be unique
-- **name_ar** (required): Arabic name, must contain only Arabic letters and spaces, must be unique
-
-**Response (201 Created):**
-```json
-{
-  "id": 3,
-  "name_en": "Electronics",
-  "name_ar": "إلكترونيات"
-}
-```
-
-**Validation Rules:**
-- `name_en` and `name_ar` must be unique across all categories
-- Both fields are required
-- `name_en` must contain only English letters and spaces
-- `name_ar` must contain only Arabic letters and spaces
-
-**Error Response (400 Bad Request) - Duplicate name:**
-```json
-{
-  "name_ar": ["category with this name ar already exists."],
-  "name_en": ["category with this name en already exists."]
-}
-```
-
-**Error Response (400 Bad Request) - Invalid characters:**
-```json
-{
-  "name_en": ["Full name English must contain only English letters and spaces."],
-  "name_ar": ["Full name Arabic must contain only Arabic letters and spaces."]
-}
-```
-
-**Error Response (400 Bad Request) - Missing fields:**
-```json
-{
-  "name_en": ["This field is required."],
-  "name_ar": ["This field is required."]
-}
-```
-
-**Error Response (401 Unauthorized) - Not authenticated:**
-```json
-{
-  "detail": "Authentication credentials were not provided."
-}
-```
-
-**Error Response (403 Forbidden) - Not superuser:**
-```json
-{
-  "detail": "You do not have permission to perform this action."
-}
-```
-
----
-
-### 3. Retrieve Category Details
+### 2. Retrieve Category Details
 **Endpoint:** `GET /api/categories/{id}/`
 
 **Description:** Retrieve a single category with all its subcategories.
@@ -175,7 +104,7 @@ Content-Type: application/json
     {
       "id": 11,
       "name_en": "Laptops",
-      "name_ar": "حاسبات",
+      "name_ar": "لابتوبات",
       "category": 1
     }
   ]
@@ -196,48 +125,6 @@ Content-Type: application/json
 ```json
 {
   "detail": "Not found."
-}
-```
-
----
-
-### 4. Delete Category
-**Endpoint:** `DELETE /api/categories/{id}/`
-
-**Description:** Delete a category. **Warning:** This will cascade delete all associated subcategories and products.
-
-**Permissions:** Superuser only
-
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
-
-**Response (204 No Content):** 
-```
-(Empty body)
-```
-
-**Error Responses:**
-
-**404 Not Found:** 
-```json
-{
-  "detail": "Not found."
-}
-```
-
-**401 Unauthorized:**
-```json
-{
-  "detail": "Authentication credentials were not provided."
-}
-```
-
-**403 Forbidden:**
-```json
-{
-  "detail": "You do not have permission to perform this action."
 }
 ```
 
@@ -269,7 +156,7 @@ Authorization: Bearer <access_token>
   {
     "id": 11,
     "name_en": "Laptops",
-    "name_ar": "حاسبات",
+    "name_ar": "لابتوبات",
     "category": 1
   },
   {
@@ -288,104 +175,12 @@ Authorization: Bearer <access_token>
 
 ---
 
-### 2. Create SubCategory
-**Endpoint:** `POST /api/subcategories/`
-
-**Description:** Create a new subcategory under a category.
-
-**Permissions:** Superuser only
-
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name_en": "Tablets",
-  "name_ar": "أجهزة لوحية",
-  "category": 1
-}
-```
-
-**Field Requirements:**
-- **name_en** (required): English name, must contain only English letters and spaces
-- **name_ar** (required): Arabic name, must contain only Arabic letters and spaces
-- **category** (required): Category ID (must exist)
-- **Unique together:** (`category`, `name_en`) and (`category`, `name_ar`)
-
-**Response (201 Created):**
-```json
-{
-  "id": 12,
-  "name_en": "Tablets",
-  "name_ar": "أجهزة لوحية",
-  "category": 1
-}
-```
-
-**Validation Rules:**
-- Required fields: `name_en`, `name_ar`, `category`
-- Unique together: (`category`, `name_en`) and (`category`, `name_ar`)
-- Same subcategory name can exist in different categories
-- `name_en` must contain only English letters and spaces
-- `name_ar` must contain only Arabic letters and spaces
-
-**Error Response (400 Bad Request) - Duplicate within category:**
-```json
-{
-  "non_field_errors": ["The fields category, name_en must make a unique set."]
-}
-```
-
-**Error Response (400 Bad Request) - Invalid category ID:**
-```json
-{
-  "category": ["Invalid pk \"999\" - object does not exist."]
-}
-```
-
-**Error Response (400 Bad Request) - Missing fields:**
-```json
-{
-  "name_en": ["This field is required."],
-  "name_ar": ["This field is required."],
-  "category": ["This field is required."]
-}
-```
-
-**Error Response (400 Bad Request) - Invalid characters:**
-```json
-{
-  "name_en": ["Full name English must contain only English letters and spaces."],
-  "name_ar": ["Full name Arabic must contain only Arabic letters and spaces."]
-}
-```
-
-**Error Response (401 Unauthorized):**
-```json
-{
-  "detail": "Authentication credentials were not provided."
-}
-```
-
-**Error Response (403 Forbidden):**
-```json
-{
-  "detail": "You do not have permission to perform this action."
-}
-```
-
----
-
 ## Product Endpoints
 
 ### 1. List All Products (with Filtering, Searching, Sorting)
 **Endpoint:** `GET /api/products/`
 
-**Description:** Retrieve all products with support for bilingual filtering (EN/AR), searching, and sorting.
+**Description:** Retrieve all active products with support for bilingual filtering (EN/AR), searching, and sorting. Only active products are shown to normal users.
 
 **Permissions:** Public (no authentication required)
 
@@ -399,7 +194,6 @@ Content-Type: application/json
 | Parameter | Type | Description | Example |
 |-----------|------|-------------|---------|
 | `search` | string | Free-text search across product names and category/subcategory names (AR/EN) | `?search=هاتف` |
-| `name` | string | Filter by product name (AR or EN, partial, case-insensitive) | `?name=iphone` |
 | `category` | string | Filter by category name (AR or EN, partial, case-insensitive) | `?category=إلكترونيات` |
 | `subcategory` | string | Filter by subcategory name (AR or EN, partial, case-insensitive) | `?subcategory=هواتف` |
 | `min_price` | number | Minimum price (inclusive) | `?min_price=50` |
@@ -419,7 +213,6 @@ Content-Type: application/json
 **Examples:**
 - `GET /api/products/` - All products (default ordering: newest first)
 - `GET /api/products/?search=هاتف` - Search for "هاتف" in all text fields
-- `GET /api/products/?name=iphone` - Products with "iphone" in name
 - `GET /api/products/?category=إلكترونيات&ordering=-price` - Electronics sorted by price (high to low)
 - `GET /api/products/?subcategory=هواتف&min_price=50&max_price=500` - Phones between 50-500
 - `GET /api/products/?governorate=مسقط` - Products in Muscat governorate
@@ -449,8 +242,11 @@ Content-Type: application/json
     "contact_phone": "+96891234567",
     "whatsapp_url": "https://wa.me/96891234567",
     "image_urls": [
-      { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file.jpg" }
-    ]
+      { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file.jpg" }
+    ],
+    "status": "active",
+    "ad": false,
+    "posted_at": "2025-10-09T12:34:56Z"
   },
   {
     "id": 2,
@@ -471,9 +267,12 @@ Content-Type: application/json
     "contact_phone": "+96898765432",
     "whatsapp_url": "https://wa.me/96898765432",
     "image_urls": [
-      { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file1.jpg" },
-      { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file2.jpg" }
-    ]
+      { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file1.jpg" },
+      { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file2.jpg" }
+    ],
+    "status": "active",
+    "ad": true,
+    "posted_at": "2025-10-08T10:20:30Z"
   }
 ]
 ```
@@ -483,17 +282,12 @@ Content-Type: application/json
 []
 ```
 
-**Response for No Matches (200 OK):**
-```json
-[]
-```
-
 ---
 
 ### 2. Create Product
 **Endpoint:** `POST /api/products/`
 
-**Description:** Create a new product listing. The authenticated user will be automatically set as the product owner.
+**Description:** Create a new product listing. The authenticated user will be automatically set as the product owner. Users have a monthly quota (default: 4 free products per month). If the quota is exceeded, the product will be pending approval.
 
 **Permissions:** Authenticated users only
 
@@ -503,9 +297,7 @@ Authorization: Bearer <access_token>
 Content-Type: multipart/form-data
 ```
 
-**Content-Type:** `multipart/form-data`
-
-**Request Body (Form Data):**
+**Request Body:**
 ```
 category: 1 (required)
 subcategory: 10 (optional, can be null/omitted)
@@ -532,9 +324,9 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 | `price` | decimal | Yes | Minimum 10.00 | Max 10 digits, 2 decimal places |
 | `description` | text | Yes | - | No length limit |
 | `contact_phone` | string | Yes | Must be +968XXXXXXXX format | 8 digits after +968 |
-| `images` | files | Yes | 1-5 image files | If >5 uploaded, only first 5 saved |
+| `images` | files | Yes | 1-5 image files | Maximum 5 images allowed |
 
-**Response (201 Created):**
+**Response (201 Created) - Within Quota:**
 ```json
 {
   "id": 1,
@@ -555,35 +347,41 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
   "contact_phone": "+96891234567",
   "whatsapp_url": "https://wa.me/96891234567",
   "image_urls": [
-    { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file.jpg" }
-  ]
+    { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file.jpg" }
+  ],
+  "status": "active",
+  "ad": false,
+  "posted_at": "2025-10-09T12:34:56Z"
 }
 ```
 
-**Response Example - Product without subcategory:**
+**Response (201 Created) - Quota Exceeded (Pending Approval):**
 ```json
 {
-  "id": 2,
-  "user_full_name_en": "Fatima Al Lawati",
-  "user_full_name_ar": "فاطمة اللواتي",
+  "id": 5,
+  "user_full_name_en": "Ahmed Al Balushi",
+  "user_full_name_ar": "أحمد البلوشي",
   "category": 1,
   "category_name_en": "Electronics",
   "category_name_ar": "إلكترونيات",
-  "subcategory": null,
-  "subcategory_name_en": null,
-  "subcategory_name_ar": null,
-  "name_en": null,
-  "name_ar": "كمبيوتر محمول",
-  "governorate": "Dhofar",
-  "wilayat": "Salalah",
-  "price": "500.00",
-  "description": "Used laptop in good condition.",
-  "contact_phone": "+96898765432",
-  "whatsapp_url": "https://wa.me/96898765432",
+  "subcategory": 10,
+  "subcategory_name_en": "Phones",
+  "subcategory_name_ar": "هواتف",
+  "name_en": "Samsung Galaxy",
+  "name_ar": "سامسونج جالاكسي",
+  "governorate": "Muscat",
+  "wilayat": "Muscat",
+  "price": "250.00",
+  "description": "Brand new Samsung Galaxy.",
+  "contact_phone": "+96891234567",
+  "whatsapp_url": "https://wa.me/96891234567",
   "image_urls": [
-    { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file1.jpg" },
-    { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file2.jpg" }
-  ]
+    { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file.jpg" }
+  ],
+  "status": "pending",
+  "ad": false,
+  "posted_at": "2025-10-09T12:34:56Z",
+  "message": "You have reached your free posting limit this month. Your product is pending approval. Please contact support at support."
 }
 ```
 
@@ -624,6 +422,13 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 }
 ```
 
+**Too many images:**
+```json
+{
+  "images": ["At most 5 images allowed."]
+}
+```
+
 **Price below minimum:**
 ```json
 {
@@ -642,13 +447,6 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 ```json
 {
   "category": ["Invalid pk \"999\" - object does not exist."]
-}
-```
-
-**Invalid subcategory ID:**
-```json
-{
-  "subcategory": ["Invalid pk \"999\" - object does not exist."]
 }
 ```
 
@@ -672,7 +470,7 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 ### 3. Retrieve Product Details
 **Endpoint:** `GET /api/products/{id}/`
 
-**Description:** Retrieve full product details. **Important:** Views count is automatically incremented with each request (including this one).
+**Description:** Retrieve full product details. **Important:** Views count is automatically incremented with each request.
 
 **Permissions:** Public (no authentication required)
 
@@ -702,8 +500,11 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
   "contact_phone": "+96891234567",
   "whatsapp_url": "https://wa.me/96891234567",
   "image_urls": [
-    { "url": "https://res.cloudinary.com/<cloud_name>/image/upload/v.../file.jpg" }
-  ]
+    { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file.jpg" }
+  ],
+  "status": "active",
+  "ad": false,
+  "posted_at": "2025-10-09T12:34:56Z"
 }
 ```
 
@@ -716,12 +517,130 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 
 ---
 
+### 4. Update Product
+**Endpoint:** `PUT /api/products/{id}/` or `PATCH /api/products/{id}/`
+
+**Description:** Update a product listing. Only the product owner can update their own products.
+
+**Permissions:** Authenticated users only (must be the owner)
+
+**Request Headers:**
+```
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data) - Full Update (PUT):**
+```
+category: 1 (required)
+subcategory: 10 (optional)
+name_en: "iPhone 14 Pro" (optional)
+name_ar: "آيفون 14 برو" (required)
+governorate: "Muscat" (required)
+wilayat: "Muscat" (required)
+price: 400.00 (required)
+description: "Updated description" (required)
+contact_phone: "+96891234567" (required)
+images: [<file1>, <file2>] (required for PUT, 1-5 files)
+```
+
+**Request Body (Form Data) - Partial Update (PATCH):**
+```
+price: 400.00
+description: "Updated description with new price"
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": 1,
+  "user_full_name_en": "Ahmed Al Balushi",
+  "user_full_name_ar": "أحمد البلوشي",
+  "category": 1,
+  "category_name_en": "Electronics",
+  "category_name_ar": "إلكترونيات",
+  "subcategory": 10,
+  "subcategory_name_en": "Phones",
+  "subcategory_name_ar": "هواتف",
+  "name_en": "iPhone 14 Pro",
+  "name_ar": "آيفون 14 برو",
+  "governorate": "Muscat",
+  "wilayat": "Muscat",
+  "price": "400.00",
+  "description": "Updated description",
+  "contact_phone": "+96891234567",
+  "whatsapp_url": "https://wa.me/96891234567",
+  "image_urls": [
+    { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/new_file.jpg" }
+  ],
+  "status": "active",
+  "ad": false,
+  "posted_at": "2025-10-09T12:34:56Z"
+}
+```
+
+**Error Response (403 Forbidden) - Not the owner:**
+```json
+{
+  "detail": "You do not have permission to perform this action."
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Not found."
+}
+```
+
+---
+
+### 5. Delete Product (Soft Delete)
+**Endpoint:** `DELETE /api/products/{id}/`
+
+**Description:** Delete a product listing. This is a **soft delete** - the product status is changed to "inactive" and it will no longer be visible in public listings. Only the product owner can delete their own products.
+
+**Permissions:** Authenticated users only (must be the owner)
+
+**Request Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (204 No Content):**
+```
+(Empty body)
+```
+
+**Error Response (403 Forbidden) - Not the owner:**
+```json
+{
+  "detail": "You do not have permission to perform this action."
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "detail": "Not found."
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+---
+
 ## Ad Request Endpoints
 
 ### 1. Create Ad Request
 **Endpoint:** `POST /api/ads/request/`
 
-**Description:** Submit a request to mark a product as an ad. Each user can request an ad for a product only once.
+**Description:** Submit a request to mark your product as a paid advertisement. Each user can request an ad for a product only once. After submission, the support team will contact you via phone or WhatsApp to arrange payment and ad scheduling.
 
 **Permissions:** Authenticated users only
 
@@ -739,7 +658,7 @@ Content-Type: application/json
 ```
 
 **Field Requirements:**
-- **product** (required): Product ID for which the ad request is being made
+- **product** (required): Product ID for which the ad request is being made (must be your own product)
 
 **Response (201 Created):**
 ```json
@@ -747,16 +666,45 @@ Content-Type: application/json
   "id": 1,
   "product": 123,
   "is_approved": false,
-  "created_at": "2025-10-06T12:34:56Z",
-  "message": "Ad request successful. One of our team will contact you via phone or WhatsApp."
+  "ad_start": null,
+  "ad_end": null,
+  "created_at": "2025-10-09T12:34:56Z",
+  "message": "Ad request successful. Our team will contact you soon via phone or WhatsApp."
 }
 ```
-**Note:** Upon successful ad request, one of our team will contact you via phone or WhatsApp.
 
-**Error Response (400 Bad Request):**
+**Error Response (400 Bad Request) - Not your product:**
+```json
+{
+  "non_field_errors": ["You can only request an ad for your own product."]
+}
+```
+
+**Error Response (400 Bad Request) - Duplicate request:**
 ```json
 {
   "non_field_errors": ["You already requested an ad for this product."]
+}
+```
+
+**Error Response (400 Bad Request) - Inactive product:**
+```json
+{
+  "non_field_errors": ["Cannot request ad for an inactive product."]
+}
+```
+
+**Error Response (400 Bad Request) - Invalid product:**
+```json
+{
+  "product": ["Invalid pk \"999\" - object does not exist."]
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "detail": "Authentication credentials were not provided."
 }
 ```
 
@@ -775,10 +723,10 @@ All governorates must use the **English key** when submitting data. Filtering ac
 | `Musandam` | مسندم |
 | `Al Buraimi` | البريمي |
 | `Ad Dakhiliyah` | الداخلية |
-| `Al Batinah North` | الباطنة شمال |
-| `Al Batinah South` | الباطنة جنوب |
-| `Ash Sharqiyah North` | الشرقية شمال |
-| `Ash Sharqiyah South` | الشرقية جنوب |
+| `Al Batinah North` | شمال الباطنة |
+| `Al Batinah South` | جنوب الباطنة |
+| `Ash Sharqiyah North` | شمال الشرقية |
+| `Ash Sharqiyah South` | جنوب الشرقية |
 | `Ad Dhahirah` | الظاهرة |
 | `Al Wusta` | الوسطى |
 
@@ -790,16 +738,16 @@ All wilayats must use the **English key** when submitting data. Each wilayat bel
 - `Muscat` (مسقط), `Muttrah` (مطرح), `Al Amarat` (العامرات), `Bawshar` (بوشر), `Al Seeb` (السيب), `Qurayyat` (قريات)
 
 **Dhofar:**
-- `Salalah` (صلالة), `Taqah` (طاقة), `Mirbat` (مرباط), `Rakhyut` (رخيوت), `Thumrait` (ثمريت), `Dhalkut` (ضلكوت), `Al Mazyunah` (المزيونة), `Muqshin` (مقشن), `Shalim & Hallaniyat Islands` (شليم و جزر الحلانيات), `Sadah` (سدح)
+- `Salalah` (صلالة), `Taqah` (طاقة), `Mirbat` (مرباط), `Rakhyut` (رخيوت), `Thumrait` (ثمريت), `Dhalkut` (ضلكوت), `Al Mazyunah` (المزيونة), `Muqshin` (مقشن), `Shalim & Hallaniyat Islands` (شليم وجزر الحلانيات), `Sadah` (سدح)
 
 **Musandam:**
-- `Khasab` (خصب), `Dibba` (دبا), `Bukha` (بخا), `Madha` (مدحا)
+- `Khasab` (خصب), `Dibba` (دبا), `Bukha` (بخا), `Madha` (مدحاء)
 
 **Al Buraimi:**
-- `Al Buraimi` (البريمي), `Mahdha` (محضة), `Al Sunainah` (السنينة)
+- `Al Buraimi` (البريمي), `Mahdha` (مضة), `Al Sunainah` (السنينة)
 
 **Ad Dakhiliyah:**
-- `Nizwa` (نزوى), `Samail` (سمائل), `Bahla` (بهلا), `Adam` (آدم), `Al Hamra` (الحمراء), `Manah` (منح), `Izki` (إزكي), `Bidbid` (بدبد), `Jebel Akhdar` (الجبل الأخضر)
+- `Nizwa` (نزوى), `Samail` (سمائل), `Bahla` (بهلاء), `Adam` (أدم), `Al Hamra` (الحمراء), `Manah` (منح), `Izki` (إزكي), `Bidbid` (بدبد), `Jebel Akhdar` (الجبل الأخضر)
 
 **Al Batinah North:**
 - `Sohar` (صحار), `Shinas` (شناص), `Liwa` (لوى), `Saham` (صحم), `Al Khaburah` (الخابورة), `Al Suwaiq` (السويق)
@@ -818,6 +766,20 @@ All wilayats must use the **English key** when submitting data. Each wilayat bel
 
 **Al Wusta:**
 - `Haima` (هيماء), `Mahout` (محوت), `Duqm` (الدقم), `Al Jazer` (الجازر)
+
+---
+
+## Product Status Values
+
+Products can have one of three status values:
+
+| Status | Description |
+|--------|-------------|
+| `active` | Product is visible to all users and appears in listings |
+| `pending` | Product is awaiting admin approval (quota exceeded) |
+| `inactive` | Product has been soft-deleted by the owner (not visible) |
+
+**Note:** Only `active` products are shown in public listings. Users only see products with `status: "active"`.
 
 ---
 
@@ -842,78 +804,110 @@ All validation errors follow Django REST Framework's standard format:
 | 204 | No Content | Successful DELETE request |
 | 400 | Bad Request | Validation errors, malformed data |
 | 401 | Unauthorized | Missing or invalid authentication credentials |
-| 403 | Forbidden | Authenticated but lacking permissions (e.g., not superuser) |
+| 403 | Forbidden | Authenticated but lacking permissions (e.g., not the owner) |
 | 404 | Not Found | Resource doesn't exist |
 
 ---
 
 ## Notes & Best Practices
 
-1. **Views Count:** The `views_count` field is automatically incremented each time a product detail is accessed via `GET /api/products/{id}/`. You don't need to manually update it. This happens on every request, including from the same user.
+### 1. Image Upload (Cloudinary)
+- Each product can store up to **5 images maximum**
+- If you upload more than 5 images, only the first 5 are saved
+- Supported formats: JPG, PNG, GIF, WebP
 
-2. **Image Upload (Cloudinary):** 
-   - Images are uploaded to Cloudinary automatically upon product creation
-   - Each product can store up to 5 images
-   - If you upload more than 5 images, only the first 5 are saved
-   - Images are returned as an array of objects with `url` field (secure HTTPS URL)
-   - Supported formats: JPG, PNG, GIF, WebP
-   - The local file is automatically deleted after upload to Cloudinary
+### 2. Phone Number & WhatsApp
+- Contact phone must be in Omani format: `+968XXXXXXXX`
+- Must start with `+968` followed by exactly 8 digits
+- The WhatsApp URL is automatically generated from this number
+- Format: `https://wa.me/968XXXXXXXX`
 
-3. **Phone Number & WhatsApp:** 
-   - Contact phone must be in Omani format (`+968XXXXXXXX`)
-   - Must start with `+968` followed by exactly 8 digits
-   - The WhatsApp URL is automatically generated from this number
-   - Format: `https://wa.me/968XXXXXXXX` (the + is removed in the URL)
+### 3. Governorate/Wilayat Validation
+- The system validates that the wilayat belongs to the selected governorate
+- Invalid combinations will be rejected with a 400 error
+- When **submitting data**, use the **English keys** (e.g., "Muscat", not "مسقط")
+- When **filtering**, you can use both English and Arabic (case-insensitive, partial match)
 
-4. **Governorate/Wilayat Validation:** 
-   - The system validates that the wilayat belongs to the selected governorate
-   - Invalid combinations will be rejected with a 400 error
-   - When submitting data, use the **English keys** (e.g., "Muscat", not "مسقط")
-   - Filtering supports both EN and AR (case-insensitive, partial match)
+### 4. Subcategory Validation
+- If a subcategory is provided, it must belong to the selected category
+- Subcategory is optional - you can create a product with just a category
+- When subcategory is null, the response will show `subcategory: null`, `subcategory_name_en: null`, `subcategory_name_ar: null`
 
-5. **Subcategory Validation:** 
-   - If a subcategory is provided, it must belong to the selected category
-   - Subcategory is optional - you can create a product with just a category
-   - When subcategory is null, the response will show `subcategory: null`, `subcategory_name_en: null`, `subcategory_name_ar: null`
+### 5. Product Names
+- `name_ar` is **required** for all products
+- `name_en` is **optional** and can be null
+- When `name_en` is not provided, it will be `null` in responses
 
-6. **Product Names:**
-   - `name_ar` is required for all products
-   - `name_en` is optional and can be null
-   - When `name_en` is not provided, it will be `null` in responses
+### 6. Search Functionality
+- The `search` parameter searches across product names (Arabic and English), category names (Arabic and English), and subcategory names (Arabic and English)
+- Search is case-insensitive and supports partial matches
+- Works with both Arabic and English text
 
-7. **Search Functionality:** 
-   - The `search` parameter searches across product names (Arabic and English), category names (Arabic and English), and subcategory names (Arabic and English)
-   - Search is case-insensitive and supports partial matches
-   - Works with both Arabic and English text
+### 7. Bilingual Filtering
+- Filters for `category`, `subcategory`, `governorate`, and `wilayat` accept both English and Arabic
+- Filtering is case-insensitive and supports partial matches
+- The system internally maps Arabic names to English keys
 
-8. **Bilingual Filtering:**
-   - Filters for `category`, `subcategory`, `governorate`, and `wilayat` accept both English and Arabic
-   - Filtering is case-insensitive and supports partial matches
-   - The system internally maps Arabic names to English keys
+### 8. Multiple Filters
+- You can combine multiple query parameters for complex filtering
+- Example: `GET /api/products/?category=إلكترونيات&governorate=Muscat&min_price=100&max_price=500&ordering=-price`
+- All filters work together (AND logic)
 
-9. **Multiple Filters:** 
-   - You can combine multiple query parameters for complex filtering
-   - Example: `GET /api/products/?category=إلكترونيات&governorate=Muscat&min_price=100&max_price=500&ordering=-price`
-   - All filters work together (AND logic)
+### 9. Default Ordering
+- Products are sorted by newest first (`-posted_at`) by default
+- You can override this with the `ordering` parameter
 
-10. **Default Ordering:**
-    - Products are sorted by newest first (`-posted_at`) by default
-    - You can override this with the `ordering` parameter
+### 10. Multipart Form Data
+- When creating a product, you must use `Content-Type: multipart/form-data`
+- This is required because you're uploading image files
+- All text fields should be sent as form fields, not JSON
+- Images should be sent as file uploads
 
-11. **Multipart Form Data:**
-    - When creating a product, you must use `Content-Type: multipart/form-data`
-    - This is required because you're uploading image files
-    - All text fields should be sent as form fields, not JSON
-    - Images should be sent as file uploads
+### 11. User Assignment
+- The product owner (`user` field) is automatically set to the authenticated user
+- You cannot manually specify the user when creating a product
 
-12. **User Assignment:**
-    - The product owner (`user` field) is automatically set to the authenticated user
-    - You cannot manually specify the user when creating a product
-    - User's full name (EN and AR) is included in product responses
+### 12. Product Ownership & Permissions
+- Only the product **owner** can update or delete their own products
+- Attempting to update/delete someone else's product will return a 403 Forbidden error
+- Authentication is required for creating, updating, and deleting products
 
-13. **Authentication vs. Public Access:**
-    - **No auth needed:** List products, view product details, list categories/subcategories, view category details
-    - **Auth required:** Create products
-    - **Superuser required:** Create/delete categories and subcategories
+### 13. Soft Delete
+- When a user deletes a product, it's a **soft delete**
+- The product's status is changed to `inactive` and it's no longer visible in public listings
+
+### 14. Monthly Quota
+- Users have a monthly quota for free product postings (default: 4 products per month)
+- The quota resets at the beginning of each month
+- If you exceed your quota, new products will have `status: "pending"` and require admin approval
+- You'll receive a message in the response explaining the situation
+- Only active and pending products count toward your monthly quota (inactive/deleted products don't count)
+
+### 15. Ad Products
+- Products with `ad: true` are paid advertisements
+- These products appear prominently in listings
+- To request an ad for your product, use the `/api/ads/request/` endpoint
+- The support team will contact you to arrange payment and scheduling
+
+### 16. Product Status Lifecycle
+- **Active**: Normal visible product
+- **Pending**: Awaiting admin approval (quota exceeded)
+- **Inactive**: Soft-deleted by owner (not visible to public)
+
+---
+
+## Endpoints Summary
+
+| Method | Endpoint | Auth Required | Description |
+|--------|----------|---------------|-------------|
+| GET | `/api/categories/` | No | List all categories |
+| GET | `/api/categories/{id}/` | No | Get category with subcategories |
+| GET | `/api/subcategories/` | No | List all subcategories |
+| GET | `/api/products/` | No | List all active products (with filters) |
+| POST | `/api/products/` | Yes | Create a new product |
+| GET | `/api/products/{id}/` | No | Get product details (increments views) |
+| PUT/PATCH | `/api/products/{id}/` | Yes (owner) | Update product |
+| DELETE | `/api/products/{id}/` | Yes (owner) | Soft delete product |
+| POST | `/api/ads/request/` | Yes | Request ad for your product |
 
 ---

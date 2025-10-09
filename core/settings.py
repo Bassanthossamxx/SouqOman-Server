@@ -21,6 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 ALLOWED_HOSTS = []
 
+FREE_PRODUCTS_PER_MONTH = 4
+SUPPORT_PHONE = "+968-XXXXXXXX"
+
+
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 

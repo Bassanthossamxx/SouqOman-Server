@@ -12,6 +12,9 @@
 |----------|--------|-------------|
 | `/products/` | GET | List all products (all statuses) |
 | `/products/{id}/approve/` | PATCH or PUT | Approve pending product (no body required) |
+| `/products/{id}/` | DELETE | Hard delete product |
+| `/categories/` | POST | Create category |
+| `/subcategories/` | POST | Create subcategory |
 | `/ads/` | GET | List all ad requests |
 | `/ads/{id}/approve/` | PATCH | Approve ad request |
 | `/users/` | GET | List all users |
@@ -128,6 +131,121 @@ Status: `200 OK`
 | `401` | Missing or invalid authentication token |
 | `403` | User is not a superuser |
 | `404` | Product not found or not in pending status |
+
+---
+
+### Delete Product (Hard Delete)
+
+| | |
+|---|---|
+| Endpoint | `DELETE /dashboard/products/{id}/` |
+| Auth Required | Yes (Superuser) |
+| Request Body | None |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | Product ID to delete |
+
+#### Response
+
+Status: `204 No Content`
+
+No response body returned on success.
+
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+| `404` | Product not found | `{"detail": "Not found."}` |
+
+---
+
+## 🗂️ Categories & Subcategories (Admin)
+
+### Create Category
+
+| | |
+|---|---|
+| Endpoint | `POST /dashboard/categories/` |
+| Auth Required | Yes (Superuser) |
+| Content-Type | `application/json` |
+
+#### Request Body
+
+```json
+{
+  "name_en": "Electronics",
+  "name_ar": "إلكترونيات"
+}
+```
+
+#### Response
+
+Status: `201 Created`
+
+```json
+{
+  "id": 5,
+  "name_en": "Electronics",
+  "name_ar": "إلكترونيات"
+}
+```
+
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `400` | Validation error (empty or invalid names) | `{"name_en": ["This field may not be blank."]}` |
+| `400` | Duplicate category name | `{"name_en": ["Category with this name already exists."]}` or `{"name_ar": ["Category with this name already exists."]}` |
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
+
+---
+
+### Create Subcategory
+
+| | |
+|---|---|
+| Endpoint | `POST /dashboard/subcategories/` |
+| Auth Required | Yes (Superuser) |
+| Content-Type | `application/json` |
+
+#### Request Body
+
+```json
+{
+  "category": 5,
+  "name_en": "Phones",
+  "name_ar": "هواتف"
+}
+```
+
+#### Response
+
+Status: `201 Created`
+
+```json
+{
+  "id": 12,
+  "name_en": "Phones",
+  "name_ar": "هواتف",
+  "category": 5
+}
+```
+
+#### Errors
+
+| Status | Description | Response Example |
+|--------|-------------|------------------|
+| `400` | Validation error (empty/invalid names) | `{"name_en": ["This field may not be blank."]}` |
+| `400` | Category does not exist | `{"category": ["Invalid pk \"999\" - object does not exist."]}` |
+| `400` | Duplicate subcategory under the same category | `{"name_en": ["Subcategory already exists for this category."]}` or `{"name_ar": ["Subcategory already exists for this category."]}` |
+| `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
+| `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
 
 ---
 

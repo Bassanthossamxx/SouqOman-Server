@@ -5,8 +5,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from apps.products.models import Product, AdRequest
-from apps.products.serializers import ProductSerializer, AdRequestSerializer
+from apps.products.models import Product, AdRequest, Category, SubCategory
+from apps.products.serializers import (
+    ProductSerializer,
+    AdRequestSerializer,
+    CategorySerializer,
+    SubCategorySerializer,
+)
 from apps.products.filters import ProductFilter
 from core.permissions import IsSuperUser
 from .serializers import UserListSerializer, UserDetailSerializer
@@ -110,6 +115,35 @@ class AdminApproveAdRequestView(generics.UpdateAPIView):
         return Response({
             "message": f"Product '{product.name_ar} - {product.pk}' marked as Ad from {ad_start.date()} to {ad_end.date()}.",
         }, status=200)
+
+
+# ========================
+# CATEGORY & SUBCATEGORY (ADMIN CREATE)
+# ========================
+
+class AdminCategoryCreateView(generics.CreateAPIView):
+    """Create a new category - superuser only"""
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsSuperUser]
+
+
+class AdminSubCategoryCreateView(generics.CreateAPIView):
+    """Create a new subcategory - superuser only"""
+    queryset = SubCategory.objects.all()
+    serializer_class = SubCategorySerializer
+    permission_classes = [IsSuperUser]
+
+
+# ========================
+# PRODUCT DELETE (ADMIN HARD DELETE)
+# ========================
+
+class AdminProductDeleteView(generics.DestroyAPIView):
+    """Hard delete a product - superuser only"""
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsSuperUser]
 
 
 # ========================

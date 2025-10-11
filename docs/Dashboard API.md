@@ -6,6 +6,20 @@
 
 ---
 
+## Pagination
+
+All list endpoints in the dashboard are paginated with a fixed page size of 20 items per page. Use the `page` query parameter to navigate (1-indexed). The response shape is:
+```
+{
+  "count": <total_items>,
+  "next": "<url or null>",
+  "previous": "<url or null>",
+  "results": [ ...items... ]
+}
+```
+
+---
+
 ## Quick Reference
 
 | Endpoint | Method | Description |
@@ -24,7 +38,7 @@
 
 ---
 
-## 🛍️ Product Management
+## 🧾 Product Management
 
 ### List All Products
 
@@ -82,10 +96,7 @@ Status: `200 OK`
       "phone": "96898765432",
       "whatsapp": "96898765432",
       "images": [
-        {
-          "id": 78,
-          "image": "https://res.cloudinary.com/xxx/image.jpg"
-        }
+        { "id": 78, "image": "https://res.cloudinary.com/xxx/image.jpg" }
       ],
       "status": "active",
       "posted_at": "2025-10-09T10:30:00Z",
@@ -177,10 +188,7 @@ No response body returned on success.
 #### Request Body
 
 ```json
-{
-  "name_en": "Electronics",
-  "name_ar": "إلكترونيات"
-}
+{ "name_en": "Electronics", "name_ar": "إلكترونيات" }
 ```
 
 #### Response
@@ -188,11 +196,7 @@ No response body returned on success.
 Status: `201 Created`
 
 ```json
-{
-  "id": 5,
-  "name_en": "Electronics",
-  "name_ar": "إلكترونيات"
-}
+{ "id": 5, "name_en": "Electronics", "name_ar": "إلكترونيات" }
 ```
 
 #### Errors
@@ -217,11 +221,7 @@ Status: `201 Created`
 #### Request Body
 
 ```json
-{
-  "category": 5,
-  "name_en": "Phones",
-  "name_ar": "هواتف"
-}
+{ "category": 5, "name_en": "Phones", "name_ar": "هواتف" }
 ```
 
 #### Response
@@ -229,12 +229,7 @@ Status: `201 Created`
 Status: `201 Created`
 
 ```json
-{
-  "id": 12,
-  "name_en": "Phones",
-  "name_ar": "هواتف",
-  "category": 5
-}
+{ "id": 12, "name_en": "Phones", "name_ar": "هواتف", "category": 5 }
 ```
 
 #### Errors
@@ -249,7 +244,7 @@ Status: `201 Created`
 
 ---
 
-## 📢 Ad Request Management
+## 📣 Ad Request Management
 
 ### List All Ad Requests
 
@@ -264,27 +259,23 @@ Status: `201 Created`
 Status: `200 OK`
 
 ```json
-[
-  {
-    "id": 15,
-    "user": {
-      "id": 12,
-      "phone": "96812345678",
-      "full_name_ar": "محمد أحمد",
-      "full_name_en": "Mohammed Ahmed"
-    },
-    "product": {
-      "id": 45,
-      "name_en": "Dell Laptop",
-      "name_ar": "حاسوب ديل"
-    },
-    "duration_preference": "30 days",
-    "requested_at": "2025-10-08T14:20:00Z",
-    "status": "pending",
-    "approved_by": null,
-    "approved_at": null
-  }
-]
+{
+  "count": 12,
+  "next": "http://localhost:8000/dashboard/ads/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 15,
+      "user": { "id": 12, "phone": "96812345678", "full_name_ar": "محمد أحمد", "full_name_en": "Mohammed Ahmed" },
+      "product": { "id": 45, "name_en": "Dell Laptop", "name_ar": "حاسوب ديل" },
+      "duration_preference": "30 days",
+      "requested_at": "2025-10-08T14:20:00Z",
+      "status": "pending",
+      "approved_by": null,
+      "approved_at": null
+    }
+  ]
+}
 ```
 
 ---
@@ -307,17 +298,12 @@ Status: `200 OK`
 
 Option 1: Duration in Days
 ```json
-{
-  "duration_days": 30
-}
+{ "duration_days": 30 }
 ```
 
 Option 2: Specific Dates
 ```json
-{
-  "ad_start": "2025-10-09T00:00:00",
-  "ad_end": "2025-11-09T00:00:00"
-}
+{ "ad_start": "2025-10-09T00:00:00", "ad_end": "2025-11-09T00:00:00" }
 ```
 
 #### Response
@@ -325,9 +311,7 @@ Option 2: Specific Dates
 Status: `200 OK`
 
 ```json
-{
-  "message": "Product 'حاسوب ديل' marked as Ad from 2025-10-09 to 2025-11-09."
-}
+{ "message": "Product 'حاسوب ديل' marked as Ad from 2025-10-09 to 2025-11-09." }
 ```
 
 #### Errors
@@ -339,12 +323,7 @@ Status: `200 OK`
 | `401` | Missing or invalid authentication token | `{"detail": "Authentication credentials were not provided."}` |
 | `403` | User is not a superuser | `{"detail": "You do not have permission to perform this action."}` |
 | `404` | Ad request not found | `{"detail": "Not found."}` |
-| `409` | Ad request already approved (cannot modify) | `{
-  "error": "Ad request is already approved and cannot be modified.",
-  "product": 45,
-  "ad_start": "2025-10-09T00:00:00Z",
-  "ad_end": "2025-11-09T00:00:00Z"
-}` |
+| `409` | Ad request already approved (cannot modify) | `{"error": "Ad request is already approved and cannot be modified.", "product": 45, "ad_start": "2025-10-09T00:00:00Z", "ad_end": "2025-11-09T00:00:00Z"}` |
 
 ---
 
@@ -580,7 +559,7 @@ No response body returned on success.
 
 ---
 
-## 🔒 Authentication
+## 🔐 Authentication
 
 All endpoints require JWT Bearer authentication.
 

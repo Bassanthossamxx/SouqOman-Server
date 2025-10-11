@@ -81,12 +81,14 @@ Status: `200 OK`
       "category": {
         "id": 5,
         "name_en": "Electronics",
-        "name_ar": "إلكترونيات"
+        "name_ar": "إلكترونيات",
+        "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/category.jpg"
       },
       "subcategory": {
         "id": 12,
         "name_en": "Laptops",
-        "name_ar": "حواسيب محمولة"
+        "name_ar": "حواسيب محمولة",
+        "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/subcategory.jpg"
       },
       "name_en": "Dell Laptop",
       "name_ar": "حاسوب ديل",
@@ -183,21 +185,33 @@ No response body returned on success.
 |---|---|
 | Endpoint | `POST /dashboard/categories/` |
 | Auth Required | Yes (Superuser) |
-| Content-Type | `application/json` |
+| Content-Type | `multipart/form-data` |
 
-#### Request Body
+#### Request Body (Form Data)
 
-```json
-{ "name_en": "Electronics", "name_ar": "إلكترونيات" }
 ```
+name_en: "Electronics" (required)
+name_ar: "إلكترونيات" (required)
+image: <file> (optional)
+```
+
+#### Field Requirements
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name_en` | string | Yes | Category name in English (only English letters and spaces) |
+| `name_ar` | string | Yes | Category name in Arabic (only Arabic letters and spaces) |
+| `image` | file | No | Category image (uploaded to Cloudinary, returns image_url) |
 
 #### Response
 
 Status: `201 Created`
 
 ```json
-{ "id": 5, "name_en": "Electronics", "name_ar": "إلكترونيات" }
+{ "id": 5, "name_en": "Electronics", "name_ar": "إلكترونيات", "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/category.jpg" }
 ```
+
+**Note:** If no image is uploaded, `image_url` will be an empty string `""`.
 
 #### Errors
 
@@ -216,21 +230,35 @@ Status: `201 Created`
 |---|---|
 | Endpoint | `POST /dashboard/subcategories/` |
 | Auth Required | Yes (Superuser) |
-| Content-Type | `application/json` |
+| Content-Type | `multipart/form-data` |
 
-#### Request Body
+#### Request Body (Form Data)
 
-```json
-{ "category": 5, "name_en": "Phones", "name_ar": "هواتف" }
 ```
+category: 5 (required)
+name_en: "Phones" (required)
+name_ar: "هواتف" (required)
+image: <file> (optional)
+```
+
+#### Field Requirements
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `category` | integer | Yes | Parent category ID |
+| `name_en` | string | Yes | Subcategory name in English (only English letters and spaces) |
+| `name_ar` | string | Yes | Subcategory name in Arabic (only Arabic letters and spaces) |
+| `image` | file | No | Subcategory image (uploaded to Cloudinary, returns image_url) |
 
 #### Response
 
 Status: `201 Created`
 
 ```json
-{ "id": 12, "name_en": "Phones", "name_ar": "هواتف", "category": 5 }
+{ "id": 12, "name_en": "Phones", "name_ar": "هواتف", "category": 5, "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/subcategory.jpg" }
 ```
+
+**Note:** If no image is uploaded, `image_url` will be an empty string `""`.
 
 #### Errors
 

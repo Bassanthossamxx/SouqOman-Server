@@ -12,20 +12,20 @@ from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 class SubCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCategory
-        fields = ["id", "name_en", "name_ar", "category"]
+        fields = ["id", "name_en", "name_ar", "category", "image_url"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "name_en", "name_ar"]
+        fields = ["id", "name_en", "name_ar", "image_url"]
 
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
     subcategories = SubCategorySerializer(many=True, read_only=True)
     class Meta:
         model = Category
-        fields = ["id", "name_en", "name_ar", "subcategories"]
+        fields = ["id", "name_en", "name_ar", "image_url", "subcategories"]
 
 
 # --- images ---

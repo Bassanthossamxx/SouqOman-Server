@@ -75,9 +75,9 @@
   "next": null,
   "previous": null,
   "results": [
-    { "id": 1, "name_en": "Electronics", "name_ar": "إلكترونيات" },
-    { "id": 2, "name_en": "Fashion", "name_ar": "أزياء" },
-    { "id": 3, "name_en": "Vehicles", "name_ar": "مركبات" }
+    { "id": 1, "name_en": "Electronics", "name_ar": "إلكترونيات", "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/category1.jpg" },
+    { "id": 2, "name_en": "Fashion", "name_ar": "أزياء", "image_url": "" },
+    { "id": 3, "name_en": "Vehicles", "name_ar": "مركبات", "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/category3.jpg" }
   ]
 }
 ```
@@ -107,16 +107,17 @@
   "id": 1,
   "name_en": "Electronics",
   "name_ar": "إلكترونيات",
+  "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/category1.jpg",
   "subcategories": [
-    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1 },
-    { "id": 11, "name_en": "Laptops", "name_ar": "لابتوبات", "category": 1 }
+    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1, "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/subcat1.jpg" },
+    { "id": 11, "name_en": "Laptops", "name_ar": "لابتوبات", "category": 1, "image_url": "" }
   ]
 }
 ```
 
 **Response (200 OK) - Category with no subcategories:**
 ```json
-{ "id": 2, "name_en": "Fashion", "name_ar": "أزياء", "subcategories": [] }
+{ "id": 2, "name_en": "Fashion", "name_ar": "أزياء", "image_url": "", "subcategories": [] }
 ```
 
 **Error Response (404 Not Found):**
@@ -150,9 +151,9 @@
   "next": "http://localhost:8000/api/subcategories/?page=2",
   "previous": null,
   "results": [
-    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1 },
-    { "id": 11, "name_en": "Laptops", "name_ar": "لابتوبات", "category": 1 },
-    { "id": 12, "name_en": "Dresses", "name_ar": "فساتين", "category": 2 }
+    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1, "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/subcat1.jpg" },
+    { "id": 11, "name_en": "Laptops", "name_ar": "لابتوبات", "category": 1, "image_url": "" },
+    { "id": 12, "name_en": "Dresses", "name_ar": "فساتين", "category": 2, "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v123/subcat2.jpg" }
   ]
 }
 ```
@@ -807,7 +808,7 @@ All validation errors follow Django REST Framework's standard format:
 - The system validates that the wilayat belongs to the selected governorate
 - Invalid combinations will be rejected with a 400 error
 - When **submitting data**, use the **English keys** (e.g., "Muscat", not "مسقط")
-- When **filtering**, you can use both English and Arabic (case-insensitive, partial match)
+- When **filtering**, you can use both Arabic and English (case-insensitive, partial match)
 
 ### 4. Subcategory Validation
 - If a subcategory is provided, it must belong to the selected category

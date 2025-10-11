@@ -14,6 +14,21 @@ ALL_WILAYAT_CHOICES = [(wil, wil) for _gov, wmap in WILAYAT_MAP.items() for wil 
 class Category(models.Model):
     name_en = models.CharField(max_length=255, unique=True, validators=[validate_name_en])
     name_ar = models.CharField(max_length=255, unique=True, validators=[validate_name_ar])
+    image = models.ImageField(upload_to="categories/", blank=True, null=True)
+    image_url = models.URLField(blank=True)
+
+    def save(self, *args, **kwargs):
+        # Upload to Cloudinary if image file is present and no URL yet
+        if self.image and not self.image_url:
+            upload_result = cloudinary.uploader.upload(self.image)
+            self.image_url = upload_result.get("secure_url")
+            # Remove local file to avoid storing media on disk
+            try:
+                self.image.delete(save=False)
+            except Exception:
+                pass
+            self.image = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name_ar
@@ -23,9 +38,24 @@ class SubCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subcategories")
     name_en = models.CharField(max_length=255, validators=[validate_name_en])
     name_ar = models.CharField(max_length=255, validators=[validate_name_ar])
+    image = models.ImageField(upload_to="subcategories/", blank=True, null=True)
+    image_url = models.URLField(blank=True)
 
     class Meta:
         unique_together = [("category", "name_ar"), ("category", "name_en")]
+
+    def save(self, *args, **kwargs):
+        # Upload to Cloudinary if image file is present and no URL yet
+        if self.image and not self.image_url:
+            upload_result = cloudinary.uploader.upload(self.image)
+            self.image_url = upload_result.get("secure_url")
+            # Remove local file to avoid storing media on disk
+            try:
+                self.image.delete(save=False)
+            except Exception:
+                pass
+            self.image = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name_ar} ({self.category.name_ar})"

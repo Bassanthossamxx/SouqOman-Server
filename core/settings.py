@@ -59,6 +59,21 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # Global pagination: 20 per page
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    # Throttling: scoped per-endpoint for auth
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        # Auth scopes
+        "auth_login": "10/min",          # limit brute-force attempts
+        "auth_register": "5/hour",       # limit sign-up abuse
+        "auth_logout": "30/min",         # generous but bounded
+        "auth_token_obtain": "10/min",   # JWT obtain pair
+        "auth_token_refresh": "30/min",  # JWT refresh
+    },
 }
 
 SIMPLE_JWT = {

@@ -8,11 +8,12 @@
 
 ## Table of Contents
 1. [Authentication & Permissions](#authentication--permissions)
-2. [Category Endpoints](#category-endpoints)
-3. [SubCategory Endpoints](#subcategory-endpoints)
-4. [Product Endpoints](#product-endpoints)
-5. [Ad Request Endpoints](#ad-request-endpoints)
-6. [Data Reference](#data-reference)
+2. [Pagination](#pagination)
+3. [Category Endpoints](#category-endpoints)
+4. [SubCategory Endpoints](#subcategory-endpoints)
+5. [Product Endpoints](#product-endpoints)
+6. [Ad Request Endpoints](#ad-request-endpoints)
+7. [Data Reference](#data-reference)
 
 ---
 
@@ -34,6 +35,22 @@
 
 ---
 
+## Pagination
+
+- All list endpoints are paginated with a fixed page size of 20 items per page.
+- Use the `page` query parameter to navigate pages (1-indexed).
+- Response shape for paginated endpoints:
+```
+{
+  "count": <total_items>,
+  "next": "<url or null>",
+  "previous": "<url or null>",
+  "results": [ ...items... ]
+}
+```
+
+---
+
 ## Category Endpoints
 
 ### 1. List All Categories
@@ -48,30 +65,26 @@
 (No authentication required)
 ```
 
+**Query Parameters:**
+- `page` (integer, optional) — Page number (default: 1)
+
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 1,
-    "name_en": "Electronics",
-    "name_ar": "إلكترونيات"
-  },
-  {
-    "id": 2,
-    "name_en": "Fashion",
-    "name_ar": "أزياء"
-  },
-  {
-    "id": 3,
-    "name_en": "Vehicles",
-    "name_ar": "مركبات"
-  }
-]
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    { "id": 1, "name_en": "Electronics", "name_ar": "إلكترونيات" },
+    { "id": 2, "name_en": "Fashion", "name_ar": "أزياء" },
+    { "id": 3, "name_en": "Vehicles", "name_ar": "مركبات" }
+  ]
+}
 ```
 
 **Response for Empty Database (200 OK):**
 ```json
-[]
+{ "count": 0, "next": null, "previous": null, "results": [] }
 ```
 
 ---
@@ -95,37 +108,20 @@
   "name_en": "Electronics",
   "name_ar": "إلكترونيات",
   "subcategories": [
-    {
-      "id": 10,
-      "name_en": "Phones",
-      "name_ar": "هواتف",
-      "category": 1
-    },
-    {
-      "id": 11,
-      "name_en": "Laptops",
-      "name_ar": "لابتوبات",
-      "category": 1
-    }
+    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1 },
+    { "id": 11, "name_en": "Laptops", "name_ar": "لابتوبات", "category": 1 }
   ]
 }
 ```
 
 **Response (200 OK) - Category with no subcategories:**
 ```json
-{
-  "id": 2,
-  "name_en": "Fashion",
-  "name_ar": "أزياء",
-  "subcategories": []
-}
+{ "id": 2, "name_en": "Fashion", "name_ar": "أزياء", "subcategories": [] }
 ```
 
 **Error Response (404 Not Found):**
 ```json
-{
-  "detail": "Not found."
-}
+{ "detail": "Not found." }
 ```
 
 ---
@@ -144,33 +140,26 @@
 (No authentication required)
 ```
 
+**Query Parameters:**
+- `page` (integer, optional) — Page number (default: 1)
+
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 10,
-    "name_en": "Phones",
-    "name_ar": "هواتف",
-    "category": 1
-  },
-  {
-    "id": 11,
-    "name_en": "Laptops",
-    "name_ar": "لابتوبات",
-    "category": 1
-  },
-  {
-    "id": 12,
-    "name_en": "Dresses",
-    "name_ar": "فساتين",
-    "category": 2
-  }
-]
+{
+  "count": 12,
+  "next": "http://localhost:8000/api/subcategories/?page=2",
+  "previous": null,
+  "results": [
+    { "id": 10, "name_en": "Phones", "name_ar": "هواتف", "category": 1 },
+    { "id": 11, "name_en": "Laptops", "name_ar": "لابتوبات", "category": 1 },
+    { "id": 12, "name_en": "Dresses", "name_ar": "فساتين", "category": 2 }
+  ]
+}
 ```
 
 **Response for Empty Database (200 OK):**
 ```json
-[]
+{ "count": 0, "next": null, "previous": null, "results": [] }
 ```
 
 ---
@@ -193,6 +182,7 @@
 
 | Parameter | Type | Description | Example |
 |-----------|------|-------------|---------|
+| `page` | integer | Page number (1-indexed). 20 items per page | `?page=2` |
 | `search` | string | Free-text search across product names and category/subcategory names (AR/EN) | `?search=هاتف` |
 | `category` | string | Filter by category name (AR or EN, partial, case-insensitive) | `?category=إلكترونيات` |
 | `subcategory` | string | Filter by subcategory name (AR or EN, partial, case-insensitive) | `?subcategory=هواتف` |
@@ -222,64 +212,67 @@
 
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 1,
-    "user_full_name_en": "Ahmed Al Balushi",
-    "user_full_name_ar": "أحمد البلوشي",
-    "category": 1,
-    "category_name_en": "Electronics",
-    "category_name_ar": "إلكترونيات",
-    "subcategory": 10,
-    "subcategory_name_en": "Phones",
-    "subcategory_name_ar": "هواتف",
-    "name_en": "iPhone 14",
-    "name_ar": "آيفون 14",
-    "governorate": "Muscat",
-    "wilayat": "Muscat",
-    "price": "350.00",
-    "description": "Brand new iPhone 14 with warranty.",
-    "contact_phone": "+96891234567",
-    "whatsapp_url": "https://wa.me/96891234567",
-    "image_urls": [
-      { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file.jpg" }
-    ],
-    "status": "active",
-    "ad": false,
-    "posted_at": "2025-10-09T12:34:56Z"
-  },
-  {
-    "id": 2,
-    "user_full_name_en": "Fatima Al Lawati",
-    "user_full_name_ar": "فاطمة اللواتي",
-    "category": 1,
-    "category_name_en": "Electronics",
-    "category_name_ar": "إلكترونيات",
-    "subcategory": null,
-    "subcategory_name_en": null,
-    "subcategory_name_ar": null,
-    "name_en": null,
-    "name_ar": "كمبيوتر محمول",
-    "governorate": "Dhofar",
-    "wilayat": "Salalah",
-    "price": "500.00",
-    "description": "Used laptop in good condition.",
-    "contact_phone": "+96898765432",
-    "whatsapp_url": "https://wa.me/96898765432",
-    "image_urls": [
-      { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file1.jpg" },
-      { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file2.jpg" }
-    ],
-    "status": "active",
-    "ad": true,
-    "posted_at": "2025-10-08T10:20:30Z"
-  }
-]
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "user_full_name_en": "Ahmed Al Balushi",
+      "user_full_name_ar": "أحمد البلوشي",
+      "category": 1,
+      "category_name_en": "Electronics",
+      "category_name_ar": "إلكترونيات",
+      "subcategory": 10,
+      "subcategory_name_en": "Phones",
+      "subcategory_name_ar": "هواتف",
+      "name_en": "iPhone 14",
+      "name_ar": "آيفون 14",
+      "governorate": "Muscat",
+      "wilayat": "Muscat",
+      "price": "350.00",
+      "description": "Brand new iPhone 14 with warranty.",
+      "contact_phone": "+96891234567",
+      "whatsapp_url": "https://wa.me/96891234567",
+      "image_urls": [ { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file.jpg" } ],
+      "status": "active",
+      "ad": false,
+      "posted_at": "2025-10-09T12:34:56Z"
+    },
+    {
+      "id": 2,
+      "user_full_name_en": "Fatima Al Lawati",
+      "user_full_name_ar": "فاطمة اللواتي",
+      "category": 1,
+      "category_name_en": "Electronics",
+      "category_name_ar": "إلكترونيات",
+      "subcategory": null,
+      "subcategory_name_en": null,
+      "subcategory_name_ar": null,
+      "name_en": null,
+      "name_ar": "كمبيوتر محمول",
+      "governorate": "Dhofar",
+      "wilayat": "Salalah",
+      "price": "500.00",
+      "description": "Used laptop in good condition.",
+      "contact_phone": "+96898765432",
+      "whatsapp_url": "https://wa.me/96898765432",
+      "image_urls": [
+        { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file1.jpg" },
+        { "url": "https://res.cloudinary.com/your-cloud/image/upload/v123/file2.jpg" }
+      ],
+      "status": "active",
+      "ad": true,
+      "posted_at": "2025-10-08T10:20:30Z"
+    }
+  ]
+}
 ```
 
 **Response for Empty Results (200 OK):**
 ```json
-[]
+{ "count": 0, "next": null, "previous": null, "results": [] }
 ```
 
 ---
@@ -652,9 +645,7 @@ Content-Type: application/json
 
 **Request Body:**
 ```json
-{
-  "product": 123
-}
+{ "product": 123 }
 ```
 
 **Field Requirements:**
@@ -675,37 +666,27 @@ Content-Type: application/json
 
 **Error Response (400 Bad Request) - Not your product:**
 ```json
-{
-  "non_field_errors": ["You can only request an ad for your own product."]
-}
+{ "non_field_errors": ["You can only request an ad for your own product."] }
 ```
 
 **Error Response (400 Bad Request) - Duplicate request:**
 ```json
-{
-  "non_field_errors": ["You already requested an ad for this product."]
-}
+{ "non_field_errors": ["You already requested an ad for this product."] }
 ```
 
 **Error Response (400 Bad Request) - Inactive product:**
 ```json
-{
-  "non_field_errors": ["Cannot request ad for an inactive product."]
-}
+{ "non_field_errors": ["Cannot request ad for an inactive product."] }
 ```
 
 **Error Response (400 Bad Request) - Invalid product:**
 ```json
-{
-  "product": ["Invalid pk \"999\" - object does not exist."]
-}
+{ "product": ["Invalid pk \"999\" - object does not exist."] }
 ```
 
 **Error Response (401 Unauthorized):**
 ```json
-{
-  "detail": "Authentication credentials were not provided."
-}
+{ "detail": "Authentication credentials were not provided." }
 ```
 
 ---
@@ -900,10 +881,10 @@ All validation errors follow Django REST Framework's standard format:
 
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|---------------|-------------|
-| GET | `/api/categories/` | No | List all categories |
+| GET | `/api/categories/` | No | List all categories (paginated, 20 per page) |
 | GET | `/api/categories/{id}/` | No | Get category with subcategories |
-| GET | `/api/subcategories/` | No | List all subcategories |
-| GET | `/api/products/` | No | List all active products (with filters) |
+| GET | `/api/subcategories/` | No | List all subcategories (paginated, 20 per page) |
+| GET | `/api/products/` | No | List all active products (paginated, filters) |
 | POST | `/api/products/` | Yes | Create a new product |
 | GET | `/api/products/{id}/` | No | Get product details (increments views) |
 | PUT/PATCH | `/api/products/{id}/` | Yes (owner) | Update product |

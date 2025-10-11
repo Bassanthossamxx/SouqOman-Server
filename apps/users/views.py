@@ -5,10 +5,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
 from django.conf import settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 
 
 class RegisterView(APIView):
+    # Rate limiting scope (see REST_FRAMEWORK.DEFAULT_THROTTLE_RATES)
+    throttle_scope = "auth_register"
+
     def post(self, request, *args, **kwargs):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -28,6 +32,9 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    # Rate limiting scope
+    throttle_scope = "auth_login"
+
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -48,6 +55,8 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
+    # Rate limiting scope
+    throttle_scope = "auth_logout"
 
     def post(self, request):
         try:
@@ -83,3 +92,12 @@ class UserDetailView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# JWT endpoints with throttling scopes
+class TokenObtainPairThrottledView(TokenObtainPairView):
+    throttle_scope = "auth_token_obtain"
+
+
+class TokenRefreshThrottledView(TokenRefreshView):
+    throttle_scope = "auth_token_refresh"

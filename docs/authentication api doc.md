@@ -5,6 +5,29 @@ This document provides detailed information about the authentication endpoints f
 ## Authentication Endpoints
 base url for all endpoints: `/api/auth/`
 
+## Rate Limiting
+To protect the platform from abuse, authentication endpoints are rate limited. If a client exceeds the limits below, the API responds with `429 Too Many Requests`.
+
+Current limits:
+- `POST /api/auth/login/`: 10 requests per minute
+- `POST /api/auth/register/`: 5 requests per hour
+- `POST /api/auth/logout/`: 30 requests per minute
+- `POST /api/auth/token/`: 10 requests per minute
+- `POST /api/auth/token/refresh/`: 30 requests per minute
+
+Example 429 response:
+```json
+{
+  "detail": "Request was throttled. Expected available in 30 seconds."
+}
+```
+
+Notes:
+- Limits are applied per client (e.g., per IP or authenticated user, depending on deployment).
+- Windows for the above limits are fixed per the unit (per minute/per hour).
+
+---
+
 ### 1. User Registration
 
 Registers a new user in the system and automatically authenticates them (issues JWT access & refresh tokens). There is no need to call the login endpoint after a successful registration.
@@ -127,6 +150,13 @@ or
 }
 ```
 
+* **429 Too Many Requests (rate limit exceeded):**
+```json
+{
+  "detail": "Request was throttled. Expected available in 59 minutes."
+}
+```
+
 ### 2. User Login
 
 Authenticates a user and provides access tokens.
@@ -168,6 +198,13 @@ Authenticates a user and provides access tokens.
 ```json
 {
   "non_field_errors": ["Invalid phone or password."]
+}
+```
+
+#### Error Response (429 Too Many Requests)
+```json
+{
+  "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
@@ -239,6 +276,13 @@ or
 ```json
 {
   "detail": "Authentication credentials were not provided."
+}
+```
+
+**429 Too Many Requests**
+```json
+{
+  "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
@@ -317,6 +361,13 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 }
 ```
 
+#### Error Response (429 Too Many Requests)
+```json
+{
+  "detail": "Request was throttled. Expected available in 30 seconds."
+}
+```
+
 ### 6. JWT Token Refresh
 
 Obtain a new access token using a valid refresh token.
@@ -355,6 +406,13 @@ Obtain a new access token using a valid refresh token.
 {
   "detail": "Token is invalid or expired",
   "code": "token_not_valid"
+}
+```
+
+#### Error Response (429 Too Many Requests)
+```json
+{
+  "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
@@ -429,7 +487,7 @@ Obtain a new access token using a valid refresh token.
 **Al Batinah North Governorate:**
 - Sohar (صحار)
 - Shinas (شناص)
-- Liwa (ليوا)
+- Liwa (لوى)
 - Saham (صحم)
 - Al Khaburah (الخابورة)
 - Al Suwaiq (السويق)

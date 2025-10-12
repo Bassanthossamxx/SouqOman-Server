@@ -41,7 +41,7 @@ urlpatterns = [
     path("users/<int:pk>/", AdminUserDetailView.as_view(), name="dashboard-user-detail"),
 
     # Superuser login
-    path("/login/", DashboardSuperuserLoginView.as_view(), name="dashboard-superuser-login"),
+    path("login/", DashboardSuperuserLoginView.as_view(), name="dashboard-superuser-login"),
 
     # JWT token management
     path("token/refresh/", TokenRefreshView.as_view(), name="dashboard-token-refresh"),

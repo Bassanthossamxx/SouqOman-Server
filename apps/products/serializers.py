@@ -177,11 +177,11 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def _user_monthly_count(self, user):
         start = self._current_month_start()
-        # count only active & pending posts in current month (inactive = user deleted -> should not count)
+        # count only active posts in current month (inactive and pending do not count)
         return Product.objects.filter(
             user=user,
             posted_at__gte=start,
-            status__in=[Product.STATUS_ACTIVE, Product.STATUS_PENDING]
+            status=Product.STATUS_ACTIVE
         ).count()
 
     def create(self, validated_data):

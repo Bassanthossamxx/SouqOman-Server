@@ -312,7 +312,7 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 |-------|------|----------|------------|-------|
 | `category` | integer | Yes | Must be valid category ID | - |
 | `subcategory` | integer | No | Must belong to selected category | Can be null/omitted |
-| `name_en` | string | No | Only English letters and spaces | Can be null/omitted |
+| `name_en` | string | No | Only English letters and spaces | optional but if not added will translate arabic name to english|
 | `name_ar` | string | Yes | Only Arabic letters and spaces | - |
 | `governorate` | string | Yes | Must be valid governorate key (EN) | See [Governorate Options](#governorate-options) |
 | `wilayat` | string | Yes | Must be valid wilayat for selected governorate | See [Wilayat Options](#wilayat-options) |
@@ -819,8 +819,7 @@ All validation errors follow Django REST Framework's standard format:
 ### 5. Product Names
 - `name_ar` is **required** for all products
 - `name_en` is **optional** and can be null
-- When `name_en` is not provided, it will be `null` in responses
-
+- When `name_en` is not provided, it will be transakted from arabic name in responses
 ### 6. Search Functionality
 - The `search` parameter searches across product names (Arabic and English), category names (Arabic and English), and subcategory names (Arabic and English)
 - Search is case-insensitive and supports partial matches

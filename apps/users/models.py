@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 
 from core.validators import (
     validate_name_ar,
@@ -17,7 +19,7 @@ class User(AbstractUser):
     phone = models.CharField(
         max_length=15,
         unique=True,
-        validators=[validate_omani_phone],
+        # validators=[validate_omani_phone],
         blank=False,
         null=False,
     )
@@ -60,3 +62,22 @@ class User(AbstractUser):
             valid_wilayats = WILAYAT_MAP.get(self.governorate, {})
             if self.wilayat not in valid_wilayats.keys():
                 raise ValidationError({"wilayat": f"{self.wilayat} is not valid for {self.governorate}"})
+
+
+class PhoneVerification(models.Model):
+    phone = models.CharField(max_length=20, unique=True)
+    transaction_id = models.CharField(max_length=100)
+    request_id = models.CharField(max_length=100, blank=True, null=True)
+    verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        status = "Verified" if self.verified else "Pending"
+        return f"{self.phone} - {status}"
+
+    def can_resend(self):
+        """
+        Allow resend only if 60 seconds have passed since last update.
+        """
+        return self.updated_at < timezone.now() - timedelta(seconds=60)

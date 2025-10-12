@@ -6,20 +6,141 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenErro
 from django.conf import settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer , OTPRequestSerializer, OTPVerifySerializer
+
+from django.shortcuts import get_object_or_404
+
+from .models import PhoneVerification, User
+from core.utils import create_otp_transaction, activate_otp_transaction, verify_otp
+
+
+class SendOTPView(APIView):
+    """Step 1: Create and activate Akedly OTP transaction."""
+
+    def post(self, request):
+        serializer = OTPRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone = serializer.validated_data["phone"]
+
+        # if not phone.startswith("+968"):
+        #     return Response({"error": "Only Omani phone numbers are supported."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if record exists
+        record, _ = PhoneVerification.objects.get_or_create(phone=phone)
+
+        try:
+            transaction_id = create_otp_transaction(phone)
+            request_id = activate_otp_transaction(transaction_id)
+
+            record.transaction_id = transaction_id
+            record.request_id = request_id
+            record.verified = False
+            record.save()
+
+            return Response(
+                {"message": f"OTP sent successfully"},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyOTPView(APIView):
+    """Step 2: Verify the OTP entered by the user."""
+
+    def post(self, request):
+        serializer = OTPVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone = serializer.validated_data["phone"]
+        otp = serializer.validated_data["otp"]
+
+        record = get_object_or_404(PhoneVerification, phone=phone)
+
+        success, data = verify_otp(record.request_id, otp)
+        if success:
+            record.verified = True
+            record.save()
+            return Response({"message": "Phone verified successfully."}, status=status.HTTP_200_OK)
+        return Response({"error": data}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResendOTPView(APIView):
+    """Resend OTP using the same Akedly transaction, with 60s cooldown."""
+
+    def post(self, request):
+        phone = request.data.get("phone")
+
+        if not phone:
+            return Response({"error": "Phone number is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # if not phone.startswith("+968"):
+        #     return Response({"error": "Only Omani phone numbers are supported."}, status=status.HTTP_400_BAD_REQUEST)
+
+        record = get_object_or_404(PhoneVerification, phone=phone)
+
+        # 60-second cooldown
+        if not record.can_resend():
+            return Response(
+                {"error": "Please wait 60 seconds before requesting another OTP."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        try:
+            new_request_id = activate_otp_transaction(record.transaction_id)
+            record.request_id = new_request_id
+            record.verified = False
+            record.save()
+
+            return Response(
+                {"message": f"OTP resent successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AkedlyCallbackView(APIView):
+    """Handle callback from Akedly with authentication data."""
+
+    def post(self, request):
+        data = request.data
+        phone = data.get("verificationAddress", {}).get("phoneNumber")
+        status_value = data.get("status")
+
+        if phone and status_value == "success":
+            PhoneVerification.objects.update_or_create(
+                phone=phone,
+                defaults={"verified": True, "transaction_id": data.get("transactionID")},
+            )
+        return Response({"message": "Callback received."}, status=status.HTTP_200_OK)
 
 
 class RegisterView(APIView):
-    # Rate limiting scope (see REST_FRAMEWORK.DEFAULT_THROTTLE_RATES)
-    throttle_scope = "auth_register"
+    """Step 3: Register user only if verified."""
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
+        phone = request.data.get("phone")
+
+        # Ensure phone is verified
+        verification = PhoneVerification.objects.filter(phone=phone, verified=True).first()
+        if not verification:
+            return Response(
+                {"error": "Phone not verified. Please verify before registration."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            #add tokens immediately so the user is authenticated right after registration
             refresh = RefreshToken.for_user(user)
             access = refresh.access_token
+
+            # (optional) Mark verification as used
+            verification.delete()
+
             return Response(
                 {
                     "message": "User registered successfully.",
@@ -101,3 +222,4 @@ class TokenObtainPairThrottledView(TokenObtainPairView):
 
 class TokenRefreshThrottledView(TokenRefreshView):
     throttle_scope = "auth_token_refresh"
+

@@ -89,3 +89,11 @@ class UserSerializer(serializers.ModelSerializer):
             "governorate",
             "wilayat",
         ]
+
+class OTPRequestSerializer(serializers.Serializer):
+    phone = serializers.CharField(required=True)
+
+
+class OTPVerifySerializer(serializers.Serializer):
+    phone = serializers.CharField(required=True)
+    otp = serializers.CharField(required=True)

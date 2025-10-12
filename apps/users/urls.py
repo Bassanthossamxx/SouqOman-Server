@@ -32,4 +32,3 @@ urlpatterns = [
     path("token/", TokenObtainPairThrottledView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshThrottledView.as_view(), name="token_refresh"),
 ]
-

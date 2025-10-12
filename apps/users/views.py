@@ -26,6 +26,23 @@ class SendOTPView(APIView):
         # if not phone.startswith("+968"):
         #     return Response({"error": "Only Omani phone numbers are supported."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if phone is already registered
+        if User.objects.filter(phone=phone).exists():
+            return Response(
+                {"error": "Phone number already registered. Please login instead."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if there's already an active OTP request
+        existing_record = PhoneVerification.objects.filter(phone=phone).first()
+        if existing_record:
+            # If user has a recent OTP request, they should use resend
+            if not existing_record.can_resend():
+                return Response(
+                    {"error": "OTP already sent. Please wait 60 seconds or use resend OTP endpoint."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS
+                )
+
         # Check if record exists
         record, _ = PhoneVerification.objects.get_or_create(phone=phone)
 
@@ -64,42 +81,6 @@ class VerifyOTPView(APIView):
             record.save()
             return Response({"message": "Phone verified successfully."}, status=status.HTTP_200_OK)
         return Response({"error": data}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ResendOTPView(APIView):
-    """Resend OTP using the same Akedly transaction, with 60s cooldown."""
-
-    def post(self, request):
-        phone = request.data.get("phone")
-
-        if not phone:
-            return Response({"error": "Phone number is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # if not phone.startswith("+968"):
-        #     return Response({"error": "Only Omani phone numbers are supported."}, status=status.HTTP_400_BAD_REQUEST)
-
-        record = get_object_or_404(PhoneVerification, phone=phone)
-
-        # 60-second cooldown
-        if not record.can_resend():
-            return Response(
-                {"error": "Please wait 60 seconds before requesting another OTP."},
-                status=status.HTTP_429_TOO_MANY_REQUESTS,
-            )
-
-        try:
-            new_request_id = activate_otp_transaction(record.transaction_id)
-            record.request_id = new_request_id
-            record.verified = False
-            record.save()
-
-            return Response(
-                {"message": f"OTP resent successfully"},
-                status=status.HTTP_200_OK,
-            )
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AkedlyCallbackView(APIView):
@@ -222,4 +203,3 @@ class TokenObtainPairThrottledView(TokenObtainPairView):
 
 class TokenRefreshThrottledView(TokenRefreshView):
     throttle_scope = "auth_token_refresh"
-

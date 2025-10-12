@@ -53,17 +53,9 @@ Initiates the OTP verification process by sending a one-time password to the pro
 
 | Field | Type | Required | Description | Validation Rules |
 |-------|------|----------|-------------|-----------------|
-| phone | string | Yes | User's phone number | Must be a valid Omani phone number format (e.g., +968XXXXXXXX or 968XXXXXXXX) |
+| phone | string | Yes | User's phone number | Must be a valid Omani phone number format (e.g., +968XXXXXXXX ) |
 
 #### Example Request
-
-```json
-{
-  "phone": "+96891234567"
-}
-```
-
-or
 
 ```json
 {
@@ -409,19 +401,10 @@ Authenticates a user and provides access tokens.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| phone | string | Yes | User's phone number in format +968XXXXXXXX or 968XXXXXXXX |
+| phone | string | Yes | User's phone number in format +968XXXXXXXX|
 | password | string | Yes | User's password |
 
 #### Example Request
-
-```json
-{
-  "phone": "96891234567",
-  "password": "SecurePassword123"
-}
-```
-
-or
 
 ```json
 {
@@ -630,7 +613,7 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 
 ```json
 {
-  "username": "96891234567",
+  "username": "+96891234567",
   "password": "SecurePassword123"
 }
 ```
@@ -727,7 +710,7 @@ Obtain a new access token using a valid refresh token.
    ```json
    POST /api/auth/send/otp/
    {
-     "phone": "96891234567"
+     "phone": "+96891234567"
    }
    ```
    Response: `{"message": "OTP sent successfully"}`
@@ -736,7 +719,7 @@ Obtain a new access token using a valid refresh token.
    ```json
    POST /api/auth/verify/otp/
    {
-     "phone": "96891234567",
+     "phone": "+96891234567",
      "otp": "123456"
    }
    ```
@@ -746,7 +729,7 @@ Obtain a new access token using a valid refresh token.
    ```json
    POST /api/auth/register/
    {
-     "phone": "96891234567",
+     "phone": "+96891234567",
      "email": "user@example.com",
      "password": "SecurePassword123",
      "password2": "SecurePassword123",
@@ -766,7 +749,7 @@ Obtain a new access token using a valid refresh token.
    ```json
    POST /api/auth/login/
    {
-     "phone": "96891234567",
+     "phone": "+96891234567",
      "password": "SecurePassword123"
    }
    ```
@@ -959,14 +942,14 @@ Example Timeline:
 3. **Phone Number Validation:**
    - Phone numbers already registered cannot request OTP
    - The system will return an error directing users to login instead
-   - Supports both formats: `+968XXXXXXXX` and `968XXXXXXXX`
+   - Supports format: `+968XXXXXXXX`
 
 4. **Token Storage:**
    - Store JWT tokens securely on the client side
    - Never store sensitive tokens in localStorage for production applications
    - Consider using HTTP-only cookies for the refresh token
-   - Access tokens typically expire in 5-15 minutes
-   - Refresh tokens typically expire in 1-7 days
+   - Access tokens typically expire in 6 hours
+   - Refresh tokens typically expire in 30 days
 
 5. **Error Handling:**
    - Implement proper error handling for all API responses
@@ -982,7 +965,7 @@ Example Timeline:
 7. **Phone Format:**
    - Ensure phone numbers are always formatted consistently
    - Consider implementing a phone input mask on the frontend to guide users
-   - Backend accepts both `+968XXXXXXXX` and `968XXXXXXXX` formats
+   - Backend accepts both `+968XXXXXXXX`` format
 
 8. **Authorization:**
    - For protected endpoints, always include the access token in the Authorization header
@@ -997,8 +980,8 @@ Example Timeline:
    - Consider implementing fallback mechanisms for critical flows
 
 10. **Security Best Practices:**
-    - Always use HTTPS in production
-    - Implement CSRF protection for state-changing operations
-    - Rate limit authentication endpoints to prevent brute force attacks
-    - Log authentication attempts for security monitoring
-    - Implement account lockout after multiple failed login attempts
+   - Always use HTTPS in production
+   - Implement CSRF protection for state-changing operations
+   - Rate limit authentication endpoints to prevent brute force attacks
+   - Log authentication attempts for security monitoring
+   - Implement account lockout after multiple failed login attempts

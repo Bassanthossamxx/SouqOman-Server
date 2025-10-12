@@ -295,7 +295,7 @@ Content-Type: multipart/form-data
 ```
 category: 1 (required)
 subcategory: 10 (optional, can be null/omitted)
-name_en: "iPhone 14" (optional, can be null/omitted)
+name_en: "iPhone 14" (optional, if user doesn't provide, it will translate from Arabic)
 name_ar: "آيفون 14" (required)
 governorate: "Muscat" (required)
 wilayat: "Muscat" (required)
@@ -304,6 +304,7 @@ description: "Brand new iPhone 14." (required)
 contact_phone: "+96891234567" (required)
 images: [<file1>, <file2>, ...] (required, 1-5 files)
 ```
+#### Note: if user doesn't enter english name, it will be auto-translated from arabic to english.
 
 **Field Requirements:**
 

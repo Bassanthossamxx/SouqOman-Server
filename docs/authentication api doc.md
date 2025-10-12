@@ -721,7 +721,7 @@ Obtain a new access token using a valid refresh token.
 
 ## Complete Authentication Flow
 
-### New User Registration Flow
+###  User Registration Flow
 
 1. **Send OTP**: Client sends phone number to `send/otp/`
    ```json
@@ -760,7 +760,7 @@ Obtain a new access token using a valid refresh token.
 
 4. **Store Tokens**: Save the tokens securely on the client
 
-### Existing User Login Flow
+###  User Login Flow
 
 1. **Login**: Client sends credentials to `login/`
    ```json
@@ -897,7 +897,7 @@ Example Timeline:
 - Al Hamra (الحمراء)
 - Manah (منح)
 - Izki (إزكي)
-- Bidbid (بِدبد)
+- Bidbid (بدبد)
 - Jebel Akhdar (الجبل الأخضر)
 
 **Al Batinah North Governorate:**

@@ -727,7 +727,7 @@ All wilayats must use the **English key** when submitting data. Each wilayat bel
 - `Khasab` (خصب), `Dibba` (دبا), `Bukha` (بخا), `Madha` (مدحاء)
 
 **Al Buraimi:**
-- `Al Buraimi` (البريمي), `Mahdha` (مضة), `Al Sunainah` (السنينة)
+- `Al Buraimi` (البريمي), `Mahdha` (ومضة), `Al Sunainah` (السنينة)
 
 **Ad Dakhiliyah:**
 - `Nizwa` (نزوى), `Samail` (سمائل), `Bahla` (بهلاء), `Adam` (أدم), `Al Hamra` (الحمراء), `Manah` (منح), `Izki` (إزكي), `Bidbid` (بدبد), `Jebel Akhdar` (الجبل الأخضر)

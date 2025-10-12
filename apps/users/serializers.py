@@ -90,6 +90,7 @@ class UserSerializer(serializers.ModelSerializer):
             "wilayat",
         ]
 
+
 class OTPRequestSerializer(serializers.Serializer):
     phone = serializers.CharField(required=True)
 

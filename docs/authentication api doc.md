@@ -1,6 +1,6 @@
 # Authentication API Documentation
 
-This document provides detailed information about the authentication endpoints for SouqOman platform. It covers user registration, login, logout, user details, token management processes, including request parameters, validation rules, error scenarios, and response formats.
+This document provides detailed information about the authentication endpoints for SouqOman platform. It covers OTP verification, user registration, login, logout, user details, and token management processes, including request parameters, validation rules, error scenarios, and response formats.
 
 ## Authentication Endpoints
 base url for all endpoints: `/api/auth/`
@@ -9,6 +9,8 @@ base url for all endpoints: `/api/auth/`
 To protect the platform from abuse, authentication endpoints are rate limited. If a client exceeds the limits below, the API responds with `429 Too Many Requests`.
 
 Current limits:
+- `POST /api/auth/send/otp/`: 20 requests per hour (per phone number)
+- `POST /api/auth/verify/otp/`: 10 requests per hour (per phone number)
 - `POST /api/auth/login/`: 10 requests per minute
 - `POST /api/auth/register/`: 5 requests per hour
 - `POST /api/auth/logout/`: 30 requests per minute
@@ -28,21 +30,224 @@ Notes:
 
 ---
 
-### 1. User Registration
+## OTP Flow (Phone Verification)
 
-Registers a new user in the system and automatically authenticates them (issues JWT access & refresh tokens). There is no need to call the login endpoint after a successful registration.
+Before registering, users must verify their phone number using OTP (One-Time Password). This is a two-step process:
 
-**Endpoint:** register/`
+1. **Send OTP**: Request an OTP code to be sent to the phone number
+2. **Verify OTP**: Confirm the OTP code received via WP or SMS if WP is not available
+
+### 1. Send OTP
+
+Initiates the OTP verification process by sending a one-time password to the provided phone number via WP message /SMS.
+
+**Endpoint:** `send/otp/`
 
 **Method:** `POST`
 
 **Content-Type:** `application/json`
 
+**Authentication:** Not required
+
 #### Request Body
 
 | Field | Type | Required | Description | Validation Rules |
 |-------|------|----------|-------------|-----------------|
-| phone | string | Yes | User's phone number | Must follow Omani format: +968XXXXXXXX (8 digits after +968) |
+| phone | string | Yes | User's phone number | Must be a valid Omani phone number format (e.g., +968XXXXXXXX or 968XXXXXXXX) |
+
+#### Example Request
+
+```json
+{
+  "phone": "+96891234567"
+}
+```
+
+or
+
+```json
+{
+  "phone": "+96891234567"
+}
+```
+
+#### Success Response (200 OK)
+
+```json
+{
+  "message": "OTP sent successfully"
+}
+```
+
+Notes:
+- The OTP code is sent via WP/SMS to the provided phone number
+- The OTP is valid for a limited time (typically 3 minutes)
+- Users must wait 60 seconds before requesting a new OTP for the same phone number
+
+#### Error Responses
+
+**400 Bad Request - Phone Already Registered**
+
+```json
+{
+  "error": "Phone number already registered. Please login instead."
+}
+```
+
+**429 Too Many Requests - OTP Already Sent**
+
+If the user tries to send OTP again within 60 seconds:
+
+```json
+{
+  "error": "OTP already sent. Please wait 60 seconds or use resend OTP endpoint."
+}
+```
+
+**400 Bad Request - Missing Phone**
+
+```json
+{
+  "phone": ["This field is required."]
+}
+```
+
+**400 Bad Request - External Service Error**
+
+If the OTP service (Akedly) fails:
+
+```json
+{
+  "error": "Akedly OTP error: [error message from service]"
+}
+```
+
+**400 Bad Request - Network Error**
+
+If there's a DNS or connection issue:
+
+```json
+{
+  "error": "HTTPSConnectionPool(host='api.akedly.com', port=443): Max retries exceeded with url: /otp (Caused by NameResolutionError..."
+}
+```
+
+#### Resending OTP
+
+To resend an OTP, simply call the same endpoint again after waiting 60 seconds. There is no separate resend endpoint.
+
+**Example:**
+1. First request: OTP sent immediately
+2. Second request within 60 seconds: Returns 429 error
+3. Request after 60+ seconds: Sends new OTP successfully
+
+---
+
+### 2. Verify OTP
+
+Verifies the OTP code sent to the user's phone number. This step must be completed before registration.
+
+**Endpoint:** `verify/otp/`
+
+**Method:** `POST`
+
+**Content-Type:** `application/json`
+
+**Authentication:** Not required
+
+#### Request Body
+
+| Field | Type | Required | Description | Validation Rules |
+|-------|------|----------|-------------|-----------------|
+| phone | string | Yes | User's phone number (same as used in send OTP) | Must match the phone number used to request OTP |
+| otp | string | Yes | The OTP code received via SMS | Typically 4-6 digits |
+
+#### Example Request
+
+```json
+{
+  "phone": "+96891234567",
+  "otp": "123456"
+}
+```
+
+#### Success Response (200 OK)
+
+```json
+{
+  "message": "Phone verified successfully."
+}
+```
+
+Notes:
+- Once verified, the phone number is marked as verified in the system
+- The verification is temporary and should be followed by registration
+- The verified status allows the user to proceed with registration
+
+#### Error Responses
+
+**404 Not Found - No OTP Request Found**
+
+If no OTP was sent to this phone number:
+
+```json
+{
+  "detail": "Not found."
+}
+```
+
+**400 Bad Request - Invalid OTP**
+
+```json
+{
+  "error": "OTP verification failed"
+}
+```
+
+or
+
+```json
+{
+  "error": "Invalid or expired OTP code"
+}
+```
+
+**400 Bad Request - Missing Fields**
+
+```json
+{
+  "phone": ["This field is required."],
+  "otp": ["This field is required."]
+}
+```
+
+**400 Bad Request - OTP Service Error**
+
+```json
+{
+  "error": "Request error: [error details]"
+}
+```
+
+---
+
+### 3. User Registration
+
+Registers a new user in the system and automatically authenticates them (issues JWT access & refresh tokens). **Phone number must be verified via OTP before registration.**
+
+**Endpoint:** `register/`
+
+**Method:** `POST`
+
+**Content-Type:** `application/json`
+
+**Authentication:** Not required
+
+#### Request Body
+
+| Field | Type | Required | Description | Validation Rules |
+|-------|------|----------|-------------|-----------------|
+| phone | string | Yes | User's phone number (must be verified) | Must be verified via OTP first; must follow Omani format: +968XXXXXXXX |
 | email | string | Yes | User's email address | Must be a valid email format and unique in the system |
 | password | string | Yes | User's password | Must pass Django password validation (minimum 8 characters, not entirely numeric, not too common) |
 | password2 | string | Yes | Password confirmation | Must match the password field exactly |
@@ -55,7 +260,7 @@ Registers a new user in the system and automatically authenticates them (issues 
 
 ```json
 {
-  "phone": "+96812345678",
+  "phone": "+96891234567",
   "email": "user@example.com",
   "password": "SecurePassword123",
   "password2": "SecurePassword123",
@@ -77,36 +282,57 @@ Registers a new user in the system and automatically authenticates them (issues 
 ```
 
 Notes:
-- The user is fully authenticated immediately.
-- Store the tokens securely (prefer HTTP-only cookies or secure storage).
+- The user is fully authenticated immediately after registration
+- Store the tokens securely (prefer HTTP-only cookies or secure storage)
+- The phone verification record is deleted after successful registration
+- No need to call the login endpoint after registration
 
 #### Error Responses
 
-**400 Bad Request**
+**400 Bad Request - Phone Not Verified**
 
-Various validation errors can occur. Here are the common ones:
+If the phone number was not verified via OTP:
 
-* **Phone number validation:**
+```json
+{
+  "error": "Phone not verified. Please verify before registration."
+}
+```
+
+**400 Bad Request - Phone Number Validation**
+
 ```json
 {
   "phone": ["Phone must follow Omani format: +968XXXXXXXX"]
 }
 ```
 
-* **Email validation:**
+or if phone is already registered:
+
+```json
+{
+  "phone": ["User with this phone already exists."]
+}
+```
+
+**400 Bad Request - Email Validation**
+
 ```json
 {
   "email": ["Enter a valid email address."]
 }
 ```
+
 or
+
 ```json
 {
   "email": ["User with this email already exists."]
 }
 ```
 
-* **Password validation:**
+**400 Bad Request - Password Validation**
+
 ```json
 {
   "password": [
@@ -117,47 +343,57 @@ or
 }
 ```
 
-* **Password mismatch:**
+**400 Bad Request - Password Mismatch**
+
 ```json
 {
   "passwords": ["Passwords must match."]
 }
 ```
 
-* **Name validation:**
+**400 Bad Request - Name Validation**
+
 ```json
 {
   "full_name_ar": ["Full name Arabic must contain only Arabic letters and spaces."]
 }
 ```
+
 or
+
 ```json
 {
   "full_name_en": ["Full name English must contain only English letters and spaces."]
 }
 ```
 
-* **Governorate/Wilayat validation:**
+**400 Bad Request - Governorate/Wilayat Validation**
+
 ```json
 {
   "governorate": ["\"Invalid Governorate\" is not a valid choice."]
 }
 ```
+
 or
+
 ```json
 {
   "wilayat": ["wilayat_name is not valid for governorate_name"]
 }
 ```
 
-* **429 Too Many Requests (rate limit exceeded):**
+**429 Too Many Requests**
+
 ```json
 {
   "detail": "Request was throttled. Expected available in 59 minutes."
 }
 ```
 
-### 2. User Login
+---
+
+### 4. User Login
 
 Authenticates a user and provides access tokens.
 
@@ -167,18 +403,29 @@ Authenticates a user and provides access tokens.
 
 **Content-Type:** `application/json`
 
+**Authentication:** Not required
+
 #### Request Body
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| phone | string | Yes | User's phone number in format +968XXXXXXXX |
+| phone | string | Yes | User's phone number in format +968XXXXXXXX or 968XXXXXXXX |
 | password | string | Yes | User's password |
 
 #### Example Request
 
 ```json
 {
-  "phone": "+96812345678",
+  "phone": "96891234567",
+  "password": "SecurePassword123"
+}
+```
+
+or
+
+```json
+{
+  "phone": "+96891234567",
   "password": "SecurePassword123"
 }
 ```
@@ -193,7 +440,9 @@ Authenticates a user and provides access tokens.
 }
 ```
 
-#### Error Response (400 Bad Request)
+#### Error Responses
+
+**400 Bad Request - Invalid Credentials**
 
 ```json
 {
@@ -201,14 +450,26 @@ Authenticates a user and provides access tokens.
 }
 ```
 
-#### Error Response (429 Too Many Requests)
+**400 Bad Request - Missing Fields**
+
+```json
+{
+  "phone": ["This field is required."],
+  "password": ["This field is required."]
+}
+```
+
+**429 Too Many Requests**
+
 ```json
 {
   "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
-### 3. User Logout
+---
+
+### 5. User Logout
 
 Logs out a user by blacklisting their refresh token.
 
@@ -219,6 +480,8 @@ Logs out a user by blacklisting their refresh token.
 **Content-Type:** `application/json`
 
 **Authentication:** Requires a valid access token in the Authorization header.
+
+**Authorization Header:** `Authorization: Bearer {access_token}`
 
 #### Request Body
 
@@ -242,7 +505,7 @@ Logs out a user by blacklisting their refresh token.
 }
 ```
 
-Additional Success (200 OK - idempotent):
+**Additional Success (200 OK - idempotent):**
 
 ```json
 {
@@ -251,11 +514,12 @@ Additional Success (200 OK - idempotent):
 ```
 
 Notes:
-- Logout is idempotent. If the same refresh token is sent again after being blacklisted, the endpoint returns 200 OK with `"detail": "Already logged out."`.
+- Logout is idempotent. If the same refresh token is sent again after being blacklisted, the endpoint returns 200 OK with `"detail": "Already logged out."`
+- After logout, both the access and refresh tokens are invalid
 
 #### Error Responses
 
-**400 Bad Request**
+**400 Bad Request - Missing Refresh Token**
 
 ```json
 {
@@ -263,7 +527,7 @@ Notes:
 }
 ```
 
-or
+**400 Bad Request - Invalid Token**
 
 ```json
 {
@@ -271,7 +535,7 @@ or
 }
 ```
 
-**401 Unauthorized**
+**401 Unauthorized - No Access Token**
 
 ```json
 {
@@ -280,13 +544,16 @@ or
 ```
 
 **429 Too Many Requests**
+
 ```json
 {
   "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
-### 4. User Details
+---
+
+### 6. User Details
 
 Retrieves the authenticated user's profile details.
 
@@ -296,12 +563,14 @@ Retrieves the authenticated user's profile details.
 
 **Authentication:** Requires a valid access token in the Authorization header.
 
+**Authorization Header:** `Authorization: Bearer {access_token}`
+
 #### Success Response (200 OK)
 
 ```json
 {
   "id": 1,
-  "phone": "+96812345678",
+  "phone": "96891234567",
   "email": "user@example.com",
   "full_name_ar": "محمد أحمد",
   "full_name_en": "Mohammed Ahmed",
@@ -310,7 +579,9 @@ Retrieves the authenticated user's profile details.
 }
 ```
 
-#### Error Response (401 Unauthorized)
+#### Error Responses
+
+**401 Unauthorized - No Access Token**
 
 ```json
 {
@@ -318,7 +589,25 @@ Retrieves the authenticated user's profile details.
 }
 ```
 
-### 5. JWT Token Obtain
+**401 Unauthorized - Invalid/Expired Token**
+
+```json
+{
+  "detail": "Given token not valid for any token type",
+  "code": "token_not_valid",
+  "messages": [
+    {
+      "token_class": "AccessToken",
+      "token_type": "access",
+      "message": "Token is invalid or expired"
+    }
+  ]
+}
+```
+
+---
+
+### 7. JWT Token Obtain
 
 Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 
@@ -327,6 +616,8 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 **Method:** `POST`
 
 **Content-Type:** `application/json`
+
+**Authentication:** Not required
 
 #### Request Body
 
@@ -339,7 +630,7 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 
 ```json
 {
-  "username": "+96812345678",
+  "username": "96891234567",
   "password": "SecurePassword123"
 }
 ```
@@ -353,7 +644,9 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 }
 ```
 
-#### Error Response (401 Unauthorized)
+#### Error Responses
+
+**401 Unauthorized - Invalid Credentials**
 
 ```json
 {
@@ -361,14 +654,17 @@ Alternative endpoint to obtain JWT tokens using standard JWT authentication.
 }
 ```
 
-#### Error Response (429 Too Many Requests)
+**429 Too Many Requests**
+
 ```json
 {
   "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
-### 6. JWT Token Refresh
+---
+
+### 8. JWT Token Refresh
 
 Obtain a new access token using a valid refresh token.
 
@@ -377,6 +673,8 @@ Obtain a new access token using a valid refresh token.
 **Method:** `POST`
 
 **Content-Type:** `application/json`
+
+**Authentication:** Not required
 
 #### Request Body
 
@@ -400,7 +698,9 @@ Obtain a new access token using a valid refresh token.
 }
 ```
 
-#### Error Response (401 Unauthorized)
+#### Error Responses
+
+**401 Unauthorized - Invalid/Expired Token**
 
 ```json
 {
@@ -409,20 +709,136 @@ Obtain a new access token using a valid refresh token.
 }
 ```
 
-#### Error Response (429 Too Many Requests)
+**429 Too Many Requests**
+
 ```json
 {
   "detail": "Request was throttled. Expected available in 30 seconds."
 }
 ```
 
-## Authentication Flow (Updated)
+---
 
-1. Registration: Client sends user data to `register/`. On success, the backend returns both `access` and `refresh` tokens (auto-login). Store them securely immediately.
-2. Authenticated Requests: Use the `access` token in `Authorization: Bearer <access>` for protected endpoints (e.g., `me/`).
-3. Token Refresh: When the access token expires, send the `refresh` token to `token/refresh/` to receive a new access token.
-4. Optional Manual Login: If a user registered earlier and logs out or their tokens are cleared, they can re-authenticate via `login/` or `/users/token/`.
-5. Logout: Invalidate the session by POSTing the `refresh` token to `logout/`.
+## Complete Authentication Flow
+
+### New User Registration Flow
+
+1. **Send OTP**: Client sends phone number to `send/otp/`
+   ```json
+   POST /api/auth/send/otp/
+   {
+     "phone": "96891234567"
+   }
+   ```
+   Response: `{"message": "OTP sent successfully"}`
+
+2. **Verify OTP**: User receives SMS with OTP code and submits it
+   ```json
+   POST /api/auth/verify/otp/
+   {
+     "phone": "96891234567",
+     "otp": "123456"
+   }
+   ```
+   Response: `{"message": "Phone verified successfully."}`
+
+3. **Register**: Client sends complete registration data
+   ```json
+   POST /api/auth/register/
+   {
+     "phone": "96891234567",
+     "email": "user@example.com",
+     "password": "SecurePassword123",
+     "password2": "SecurePassword123",
+     "full_name_ar": "محمد أحمد",
+     "full_name_en": "Mohammed Ahmed",
+     "governorate": "Muscat",
+     "wilayat": "Al Seeb"
+   }
+   ```
+   Response: Returns both `access` and `refresh` tokens (auto-login)
+
+4. **Store Tokens**: Save the tokens securely on the client
+
+### Existing User Login Flow
+
+1. **Login**: Client sends credentials to `login/`
+   ```json
+   POST /api/auth/login/
+   {
+     "phone": "96891234567",
+     "password": "SecurePassword123"
+   }
+   ```
+   Response: Returns both `access` and `refresh` tokens
+
+2. **Store Tokens**: Save the tokens securely
+
+### Authenticated Requests
+
+For all protected endpoints, include the access token in the Authorization header:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+Example:
+```
+GET /api/auth/me/
+Headers:
+  Authorization: Bearer {access_token}
+```
+
+### Token Refresh Flow
+
+When the access token expires (typically after 5-15 minutes):
+
+1. **Refresh Token**: Send refresh token to get new access token
+   ```json
+   POST /api/auth/token/refresh/
+   {
+     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   }
+   ```
+   Response: Returns new `access` token
+
+2. **Update Stored Token**: Replace old access token with new one
+
+### Logout Flow
+
+1. **Logout**: Send refresh token to invalidate session
+   ```json
+   POST /api/auth/logout/
+   Headers:
+     Authorization: Bearer {access_token}
+   Body:
+   {
+     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   }
+   ```
+   Response: `{"detail": "Successfully logged out."}`
+
+2. **Clear Tokens**: Remove all stored tokens from client
+
+---
+
+## OTP Resend Logic
+
+The platform implements intelligent OTP resend logic to prevent abuse:
+
+- **First Request**: OTP is sent immediately
+- **Within 60 seconds**: Returns 429 error: `"OTP already sent. Please wait 60 seconds or use resend OTP endpoint."`
+- **After 60 seconds**: User can call the same `send/otp/` endpoint again to receive a new OTP
+- **No separate resend endpoint**: Simply retry the `send/otp/` endpoint after the cooldown period
+
+Example Timeline:
+```
+00:00 - User requests OTP → OTP sent successfully
+00:30 - User requests OTP again → 429 Error (wait 30 more seconds)
+01:05 - User requests OTP again → New OTP sent successfully
+```
+
+---
 
 ## Governorate and Wilayat Reference Data
 
@@ -526,27 +942,63 @@ Obtain a new access token using a valid refresh token.
 - Duqm (الدقم)
 - Al Jazer (الجازر)
 
+---
+
 ## Important Implementation Notes
 
-1. **Token Storage:**
+1. **Phone Verification is Mandatory:**
+   - All new users must verify their phone number via OTP before registration
+   - Registration will fail if the phone number is not verified
+   - Phone verification is temporary and expires after successful registration
+
+2. **OTP Rate Limiting:**
+   - Users must wait 60 seconds between OTP requests for the same phone number
+   - No separate resend endpoint - use the same `send/otp/` endpoint after cooldown
+   - Prevents SMS spam and abuse
+
+3. **Phone Number Validation:**
+   - Phone numbers already registered cannot request OTP
+   - The system will return an error directing users to login instead
+   - Supports both formats: `+968XXXXXXXX` and `968XXXXXXXX`
+
+4. **Token Storage:**
    - Store JWT tokens securely on the client side
    - Never store sensitive tokens in localStorage for production applications
    - Consider using HTTP-only cookies for the refresh token
+   - Access tokens typically expire in 5-15 minutes
+   - Refresh tokens typically expire in 1-7 days
 
-2. **Error Handling:**
+5. **Error Handling:**
    - Implement proper error handling for all API responses
    - Display user-friendly error messages based on the error codes received
    - Validate form inputs on the frontend before submission to improve user experience
+   - Handle OTP service failures gracefully with retry mechanisms
 
-3. **Field Dependencies:**
+6. **Field Dependencies:**
    - The wilayat field is dependent on the governorate selection
    - Frontend should dynamically update available wilayat options based on the selected governorate
+   - Validate governorate/wilayat combinations on both frontend and backend
 
-4. **Phone Format:**
-   - Ensure phone numbers are always formatted as +968XXXXXXXX
+7. **Phone Format:**
+   - Ensure phone numbers are always formatted consistently
    - Consider implementing a phone input mask on the frontend to guide users
+   - Backend accepts both `+968XXXXXXXX` and `968XXXXXXXX` formats
 
-5. **Authorization:**
+8. **Authorization:**
    - For protected endpoints, always include the access token in the Authorization header
    - Format: `Authorization: Bearer {access_token}`
    - Handle token expiration by implementing automatic token refresh using the refresh token
+   - Redirect to login page if refresh token is also expired
+
+9. **OTP Service Integration:**
+   - The platform uses Akedly service for OTP delivery
+   - Network issues or service downtime may affect OTP delivery
+   - Implement proper error handling and user feedback for service failures
+   - Consider implementing fallback mechanisms for critical flows
+
+10. **Security Best Practices:**
+    - Always use HTTPS in production
+    - Implement CSRF protection for state-changing operations
+    - Rate limit authentication endpoints to prevent brute force attacks
+    - Log authentication attempts for security monitoring
+    - Implement account lockout after multiple failed login attempts

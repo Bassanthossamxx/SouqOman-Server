@@ -22,19 +22,22 @@ All list endpoints in the dashboard are paginated with a fixed page size of 20 i
 
 ## Quick Reference
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/products/` | GET | List all products (all statuses) |
-| `/products/{id}/approve/` | PATCH or PUT | Approve pending product (no body required) |
-| `/products/{id}/` | DELETE | Hard delete product |
-| `/categories/` | POST | Create category |
-| `/subcategories/` | POST | Create subcategory |
-| `/ads/` | GET | List all ad requests |
-| `/ads/{id}/approve/` | PATCH | Approve ad request |
-| `/users/` | GET | List all users |
-| `/users/{id}/` | GET | Get user details |
-| `/users/{id}/` | PATCH | Update user |
-| `/users/{id}/` | DELETE | Delete user |
+| Endpoint                   | Method | Description |
+|----------------------------|--------|-------------|
+| `/products/`               | GET | List all products (all statuses) |
+| `/products/{id}/approve/`  | PATCH or PUT | Approve pending product (no body required) |
+| `/products/{id}/`          | DELETE | Hard delete product |
+| `/categories/`             | POST | Create category |
+| `/subcategories/`          | POST | Create subcategory |
+| `/ads/`                    | GET | List all ad requests |
+| `/ads/{id}/approve/`       | PATCH | Approve ad request |
+| `/users/`                  | GET | List all users |
+| `/users/{id}/`             | GET | Get user details |
+| `/users/{id}/`             | PATCH | Update user |
+| `/users/{id}/`             | DELETE | Delete user |
+| `/login/`                  | POST | Superuser login (returns JWT tokens; uses phone) |
+| `/token/refresh/`          | POST | Refresh access token (JWT) |
+| `/token/verify/` | POST | Verify JWT token validity |
 
 ---
 
@@ -607,3 +610,88 @@ Authorization: Bearer <your_access_token>
 
 ---
 
+## Superuser Login
+
+### `POST /dashboard/login/`
+
+Authenticate as a superuser to access dashboard endpoints. Returns JWT tokens if credentials are valid and user is a superuser.
+
+**Request Body:**
+```json
+{
+  "phone": "string",
+  "password": "string"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "refresh": "<refresh_token>",
+  "access": "<access_token>"
+}
+```
+
+**Error (401 Unauthorized):**
+```json
+{
+  "detail": "Invalid credentials or not a superuser."
+}
+```
+
+**Notes:**
+- Only users with `is_superuser = true` can log in.
+- Use the `access` token as a Bearer token for authenticated requests.
+- The phone field is used for login instead of username.
+
+---
+
+## Token Management
+
+### `POST /dashboard/token/refresh/`
+
+Obtain a new access token using a valid refresh token.
+
+**Request Body:**
+```json
+{
+  "refresh": "<refresh_token>"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "access": "<new_access_token>"
+}
+```
+
+**Error (401 Unauthorized):**
+```json
+{
+  "detail": "Token is invalid or expired"
+}
+```
+
+### `POST /dashboard/token/verify/`
+
+Verify if a JWT token is valid.
+
+**Request Body:**
+```json
+{
+  "token": "<access_or_refresh_token>"
+}
+```
+
+**Response (200 OK):**
+```json
+{}
+```
+
+**Error (401 Unauthorized):**
+```json
+{
+  "detail": "Token is invalid or expired"
+}
+```

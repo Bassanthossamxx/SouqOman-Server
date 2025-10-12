@@ -4,6 +4,11 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.products.models import Product, AdRequest, Category, SubCategory
 from apps.products.serializers import (
@@ -182,3 +187,21 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().delete(request, *args, **kwargs)
+
+
+class DashboardSuperuserLoginView(APIView):
+    def post(self, request):
+        phone = request.data.get('phone')
+        password = request.data.get('password')
+        User = get_user_model()
+        try:
+            user = User.objects.get(phone=phone)
+        except User.DoesNotExist:
+            return Response({'detail': 'Invalid credentials or not a superuser.'}, status=status.HTTP_401_UNAUTHORIZED)
+        if user.check_password(password) and user.is_superuser:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+        return Response({'detail': 'Invalid credentials or not a superuser.'}, status=status.HTTP_401_UNAUTHORIZED)

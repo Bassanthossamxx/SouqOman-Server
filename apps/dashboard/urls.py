@@ -16,7 +16,11 @@ from .views import (
     # User management
     AdminUserListView,
     AdminUserDetailView,
+
+    # Superuser login
+    DashboardSuperuserLoginView,
 )
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
     # Product management
@@ -35,4 +39,11 @@ urlpatterns = [
     # User management
     path("users/", AdminUserListView.as_view(), name="dashboard-user-list"),
     path("users/<int:pk>/", AdminUserDetailView.as_view(), name="dashboard-user-detail"),
+
+    # Superuser login
+    path("/login/", DashboardSuperuserLoginView.as_view(), name="dashboard-superuser-login"),
+
+    # JWT token management
+    path("token/refresh/", TokenRefreshView.as_view(), name="dashboard-token-refresh"),
+    path("token/verify/", TokenVerifyView.as_view(), name="dashboard-token-verify"),
 ]

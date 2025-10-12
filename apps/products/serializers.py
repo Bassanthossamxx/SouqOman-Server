@@ -7,25 +7,74 @@ from rest_framework import serializers
 from .models import Category, SubCategory, Product, ProductImage, AdRequest
 
 from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
+from core.utils import arabic_to_english
+
 
 # --- simple category/subcategory serializers ---
 class SubCategorySerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(write_only=True, required=False)
+    image_url = serializers.CharField(read_only=True)
+
     class Meta:
         model = SubCategory
-        fields = ["id", "name_en", "name_ar", "category", "image_url"]
+        fields = ["id", "name_en", "name_ar", "category", "image", "image_url"]
+
+    def create(self, validated_data):
+        image = validated_data.pop("image", None)
+        instance = SubCategory(**validated_data)
+        if image:
+            instance.image = image
+        instance.save()
+        instance.refresh_from_db()
+        return instance
+
+    def update(self, instance, validated_data):
+        image = validated_data.pop("image", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if image:
+            instance.image = image
+        instance.save()
+        instance.refresh_from_db()
+        return instance
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(write_only=True, required=False)
+    image_url = serializers.CharField(read_only=True)
+
     class Meta:
         model = Category
-        fields = ["id", "name_en", "name_ar", "image_url"]
+        fields = ["id", "name_en", "name_ar", "image", "image_url"]
+
+    def create(self, validated_data):
+        image = validated_data.pop("image", None)
+        instance = Category(**validated_data)
+        if image:
+            instance.image = image
+        instance.save()
+        instance.refresh_from_db()
+        return instance
+
+    def update(self, instance, validated_data):
+        image = validated_data.pop("image", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if image:
+            instance.image = image
+        instance.save()
+        instance.refresh_from_db()
+        return instance
 
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
     subcategories = SubCategorySerializer(many=True, read_only=True)
+    image = serializers.ImageField(write_only=True, required=False)
+    image_url = serializers.CharField(read_only=True)
+
     class Meta:
         model = Category
-        fields = ["id", "name_en", "name_ar", "image_url", "subcategories"]
+        fields = ["id", "name_en", "name_ar", "image", "image_url", "subcategories"]
 
 
 # --- images ---
@@ -152,10 +201,14 @@ class ProductSerializer(serializers.ModelSerializer):
         status = Product.STATUS_ACTIVE if current_count < effective_quota else Product.STATUS_PENDING
 
         with transaction.atomic():
+            name_en = validated_data.get("name_en")
+            name_ar = validated_data.get("name_ar")
+            if not name_en and name_ar:
+                validated_data["name_en"] = arabic_to_english(name_ar)
             product = Product.objects.create(user=user, status=status, **validated_data)
-            # create images (ProductImage.save uploads to Cloudinary)
             for img in images[:5]:
                 ProductImage.objects.create(product=product, image=img)
+
 
         product.refresh_from_db()
         return product

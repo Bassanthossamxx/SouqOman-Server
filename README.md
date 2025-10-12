@@ -1,6 +1,6 @@
 # SouqOman-Server
 
-A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to Cloudinary, comprehensive filtering/search capabilities, and a powerful admin dashboard for superusers.
+A modular Django + Django REST Framework backend for an OLX‑style classifieds / e‑commerce platform (SouqOman). It includes a complete authentication system, products management with categories, image uploads to Cloudinary and ImageKit, comprehensive filtering/search capabilities, and a powerful admin dashboard for superusers. Akedly payment integration is also supported.
 
 ## Postman 
 - Doc : https://documenter.getpostman.com/view/37742819/2sB3QJNASG
@@ -41,15 +41,16 @@ A modular Django + Django REST Framework backend for an OLX‑style classifieds 
   - Account activation/deactivation
   - Advanced search and filtering
 
-- **Image Storage**: Cloudinary integration for cloud-based image management
+- **Image Storage**: Cloudinary and ImageKit integration for cloud-based image management
 - **Location System**: Governorate and Wilayat validation for Oman
 - **Database**: PostgreSQL via `DATABASE_URL` (works great with Neon: https://neon.tech)
+- **Payment Integration**: Akedly API for transactions
 - **Environment Variables**: Managed through `python-decouple` / `.env`
 - **Django Admin**: Fully enabled with custom user management
 
 ### Planned Features:
-- Shopping cart functionality
-- Order management system
+- Shopping cart functionality *(apps/cart planned, not implemented)*
+- Order management system *(apps/orders planned, not implemented)*
 - User favorites/bookmarks
 - Advanced analytics and reporting
 - Email notifications
@@ -63,6 +64,7 @@ A modular Django + Django REST Framework backend for an OLX‑style classifieds 
 - **Cloudinary** 1.44.1 (Cloud image storage)
 - **Django Filter** 25.2 (Advanced filtering)
 - **JWT Authentication** (djangorestframework-simplejwt)
+- **Akedly** (OTP Verification API integration)
 - **Environment Management**: python-decouple, python-dotenv
 
 ---
@@ -73,7 +75,7 @@ SouqOman-Server/
 ├── requirements.txt
 ├── .env (create this)
 ├── core/
-│   ├── settings.py          # Main settings with Cloudinary config (via CLOUDINARY_URL)
+│   ├── settings.py          # Main settings with Cloudinary/ImageKit config
 │   ├── urls.py              # Root URL configuration
 │   ├── choices.py           # Governorate/Wilayat mappings
 │   ├── validators.py        # Custom validators (phone, names)
@@ -97,14 +99,14 @@ SouqOman-Server/
 │   │   ├── filters.py       # Product filtering logic
 │   │   ├── admin.py
 │   │   └── migrations/
-│   ├── dashboard/           # NEW: Admin dashboard (Superuser only)
+│   ├── dashboard/           # Admin dashboard (Superuser only)
 │   │   ├── models.py        # No models (uses existing)
 │   │   ├── serializers.py   # User management serializers
 │   │   ├── views.py         # Product/Ad/User management views
 │   │   ├── urls.py          # Dashboard routes
 │   │   └── migrations/
-│   ├── orders/              # Planned
-│   └── cart/                # Planned
+│   ├── orders/              # Planned (not implemented)
+│   └── cart/                # Planned (not implemented)
 └── docs/
     ├── authentication api doc.md
     ├── Products API.md
@@ -144,14 +146,22 @@ DEBUG=True
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DB_NAME
 
 # Cloudinary Configuration
-# Format: cloudinary://<api_key>:<api_secret>@<cloud_name>
 CLOUDINARY_URL=cloudinary://your_api_key:your_api_secret@your_cloud_name
+
+# Akedly Payment Integration
+AKEDLY_API_URL=https://api.akedly.io/api/v1/transactions
+AKEDLY_API_KEY=your_akedly_api_key
+AKEDLY_PIPELINE_ID=your_akedly_pipeline_id
 ```
 
 **To get Cloudinary credentials:**
 1. Sign up at https://cloudinary.com
 2. Go to your Dashboard
 3. Copy your Cloud name, API Key, and API Secret and form the `CLOUDINARY_URL`
+
+**To get Akedly credentials:**
+1. Sign up at https://akedly.io
+2. Get your API key and pipeline ID from your dashboard
 
 ### 5. (Optional) Generate a Secure Secret Key
 ```bash
@@ -180,12 +190,15 @@ Visit:
 ---
 ## 5. Environment Variables
 
-| Name            | Required | Purpose                          | Example                                              |
-|-----------------|----------|----------------------------------|------------------------------------------------------|
-| SECRET_KEY      | Yes      | Django security key              | (random string from generator)                       |
-| DEBUG           | Yes      | Dev = True / Prod = False        | True                                                 |
-| DATABASE_URL    | Yes      | PostgreSQL connection string     | postgres://user:pw@host:5432/db                      |
-| CLOUDINARY_URL  | Yes      | Cloudinary connection string     | cloudinary://api_key:api_secret@cloud_name           |
+| Name                 | Required | Purpose                          | Example                                              |
+|----------------------|----------|----------------------------------|------------------------------------------------------|
+| SECRET_KEY           | Yes      | Django security key              | (random string from generator)                       |
+| DEBUG                | Yes      | Dev = True / Prod = False        | True                                                 |
+| DATABASE_URL         | Yes      | PostgreSQL connection string     | postgres://user:pw@host:5432/db                      |
+| CLOUDINARY_URL       | Yes      | Cloudinary connection string     | cloudinary://api_key:api_secret@cloud_name           |
+| AKEDLY_API_URL       | Yes      | Akedly API endpoint              | https://api.akedly.io/api/v1/transactions            |
+| AKEDLY_API_KEY       | Yes      | Akedly API key                   | your_akedly_api_key                                  |
+| AKEDLY_PIPELINE_ID   | Yes      | Akedly pipeline ID               | your_akedly_pipeline_id                              |
 
 ---
 ## 6. API Endpoints
@@ -195,7 +208,6 @@ Visit:
 ### Products (`/api/`)
 
 ### Dashboard - Superuser Only (`/dashboard/`)
-
 
 **For detailed API documentation, see:**
 - `docs/authentication api doc.md` - Authentication endpoints

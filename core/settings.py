@@ -3,12 +3,11 @@ from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qsl, urlparse
 
+import cloudinary
+import cloudinary.api
+import cloudinary.uploader
 from decouple import config
 from dotenv import load_dotenv
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-import os
 
 # Cloudinary will auto-detect CLOUDINARY_URL from environment
 cloudinary.config(secure=True)
@@ -68,10 +67,10 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         # Auth scopes
-        "auth_login": "10/min",          # limit brute-force attempts
-        "auth_register": "5/hour",       # limit sign-up abuse
-        "auth_logout": "30/min",         # generous but bounded
-        "auth_token_obtain": "10/min",   # JWT obtain pair
+        "auth_login": "10/min",  # limit brute-force attempts
+        "auth_register": "5/hour",  # limit sign-up abuse
+        "auth_logout": "30/min",  # generous but bounded
+        "auth_token_obtain": "10/min",  # JWT obtain pair
         "auth_token_refresh": "30/min",  # JWT refresh
     },
 }

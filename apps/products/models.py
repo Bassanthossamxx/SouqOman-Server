@@ -1,12 +1,12 @@
+import cloudinary.uploader
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
-from django.core.validators import MinValueValidator
-from django.core.exceptions import ValidationError
-from django.conf import settings
-import cloudinary.uploader
 
 from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
-from core.validators import validate_omani_phone, validate_name_ar, validate_name_en
+from core.validators import validate_name_ar, validate_name_en, validate_omani_phone
 
 ALL_WILAYAT_CHOICES = [(wil, wil) for _gov, wmap in WILAYAT_MAP.items() for wil in wmap.keys()]
 

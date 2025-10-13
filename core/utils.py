@@ -1,15 +1,17 @@
 import asyncio
-from googletrans import Translator
-import requests
 import os
+
+import requests
 from dotenv import load_dotenv
+from googletrans import Translator
 
 translator = Translator()
+
 
 def arabic_to_english(text: str) -> str:
     """Translate Arabic text into English using Google Translate."""
     try:
-        result = translator.translate(text, src='ar', dest='en')
+        result = translator.translate(text, src="ar", dest="en")
         if asyncio.iscoroutine(result):
             result = asyncio.run(result)
         return result.text

@@ -1,16 +1,15 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
-from datetime import timedelta
 
+from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 from core.validators import (
     validate_name_ar,
     validate_name_en,
-    validate_omani_phone,
 )
-
-from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 
 
 class UserManager(BaseUserManager):
@@ -18,38 +17,30 @@ class UserManager(BaseUserManager):
 
     def create_user(self, phone, email, full_name_ar, full_name_en, governorate, wilayat, password=None, **extra_fields):
         if not phone:
-            raise ValueError('The Phone field must be set')
+            raise ValueError("The Phone field must be set")
         if not email:
-            raise ValueError('The Email field must be set')
+            raise ValueError("The Email field must be set")
         if not full_name_ar:
-            raise ValueError('The Arabic full name must be set')
+            raise ValueError("The Arabic full name must be set")
         if not full_name_en:
-            raise ValueError('The English full name must be set')
+            raise ValueError("The English full name must be set")
         if not governorate:
-            raise ValueError('The Governorate must be set')
+            raise ValueError("The Governorate must be set")
         if not wilayat:
-            raise ValueError('The Wilayat must be set')
+            raise ValueError("The Wilayat must be set")
         email = self.normalize_email(email)
-        user = self.model(
-            phone=phone,
-            email=email,
-            full_name_ar=full_name_ar,
-            full_name_en=full_name_en,
-            governorate=governorate,
-            wilayat=wilayat,
-            **extra_fields
-        )
+        user = self.model(phone=phone, email=email, full_name_ar=full_name_ar, full_name_en=full_name_en, governorate=governorate, wilayat=wilayat, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
     def create_superuser(self, phone, email, full_name_ar, full_name_en, governorate, wilayat, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
         return self.create_user(phone, email, full_name_ar, full_name_en, governorate, wilayat, password, **extra_fields)
 
 

@@ -1,12 +1,12 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from apps.products.serializers import ProductSerializer, AdRequestSerializer
+from rest_framework import serializers
 
 User = get_user_model()
 
 
 class UserListSerializer(serializers.ModelSerializer):
     """Serializer for listing users in dashboard - superuser only"""
+
     class Meta:
         model = User
         fields = [
@@ -28,6 +28,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
 class UserDetailSerializer(serializers.ModelSerializer):
     """Detailed user serializer for dashboard"""
+
     class Meta:
         model = User
         fields = [
@@ -46,4 +47,3 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "extra_monthly_posts",
         ]
         read_only_fields = ["id", "date_joined", "last_login"]
-

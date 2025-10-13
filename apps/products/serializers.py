@@ -1,13 +1,13 @@
 # serializers.py
-from calendar import monthrange
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Category, SubCategory, Product, ProductImage, AdRequest
 
-from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
+from core.choices import WILAYAT_MAP
 from core.utils import arabic_to_english
+
+from .models import AdRequest, Category, Product, ProductImage, SubCategory
 
 
 # --- simple category/subcategory serializers ---
@@ -87,12 +87,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 # --- product serializer ---
 class ProductSerializer(serializers.ModelSerializer):
     # client uploads images as files (list)
-    images = serializers.ListField(
-        child=serializers.ImageField(),
-        write_only=True,
-        required=True,
-        allow_empty=False
-    )
+    images = serializers.ListField(child=serializers.ImageField(), write_only=True, required=True, allow_empty=False)
     # read-only array of image urls
     image_urls = ProductImageSerializer(source="images", many=True, read_only=True)
 
@@ -105,8 +100,7 @@ class ProductSerializer(serializers.ModelSerializer):
     subcategory_name_ar = serializers.CharField(source="subcategory.name_ar", read_only=True)
 
     # important: user shouldn't set these directly
-    read_only_fields = ["id", "user_full_name_en", "user_full_name_ar", "image_urls", "whatsapp_url",
-                        "status", "ad", "posted_at"]
+    read_only_fields = ["id", "user_full_name_en", "user_full_name_ar", "image_urls", "whatsapp_url", "status", "ad", "posted_at"]
 
     class Meta:
         model = Product
@@ -178,11 +172,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def _user_monthly_count(self, user):
         start = self._current_month_start()
         # count only active posts in current month (inactive and pending do not count)
-        return Product.objects.filter(
-            user=user,
-            posted_at__gte=start,
-            status=Product.STATUS_ACTIVE
-        ).count()
+        return Product.objects.filter(user=user, posted_at__gte=start, status=Product.STATUS_ACTIVE).count()
 
     def create(self, validated_data):
         images = validated_data.pop("images", [])
@@ -208,7 +198,6 @@ class ProductSerializer(serializers.ModelSerializer):
             product = Product.objects.create(user=user, status=status, **validated_data)
             for img in images[:5]:
                 ProductImage.objects.create(product=product, image=img)
-
 
         product.refresh_from_db()
         return product

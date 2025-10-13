@@ -1,9 +1,10 @@
 # filepath: d:\freelance work\SouqOman-Server\apps\products\filters.py
-from django.db.models import Q
 import django_filters
+from django.db.models import Q
+
+from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 
 from .models import Product
-from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 
 
 class ProductFilter(django_filters.FilterSet):
@@ -17,6 +18,7 @@ class ProductFilter(django_filters.FilterSet):
     - governorate: string, accepts EN or AR (partial EN icontains or AR exact/partial to its EN key)
     - status: string, one of Product.STATUS_* values (admin usage)
     """
+
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
     category = django_filters.CharFilter(method="filter_category")
@@ -40,16 +42,12 @@ class ProductFilter(django_filters.FilterSet):
     def filter_category(self, queryset, name, value):
         if not value:
             return queryset
-        return queryset.filter(
-            Q(category__name_en__icontains=value) | Q(category__name_ar__icontains=value)
-        )
+        return queryset.filter(Q(category__name_en__icontains=value) | Q(category__name_ar__icontains=value))
 
     def filter_subcategory(self, queryset, name, value):
         if not value:
             return queryset
-        return queryset.filter(
-            Q(subcategory__name_en__icontains=value) | Q(subcategory__name_ar__icontains=value)
-        )
+        return queryset.filter(Q(subcategory__name_en__icontains=value) | Q(subcategory__name_ar__icontains=value))
 
     def _match_governorates(self, term: str):
         term_lower = term.lower()

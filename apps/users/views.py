@@ -1,17 +1,16 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
-from django.conf import settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer , OTPRequestSerializer, OTPVerifySerializer
 
-from django.shortcuts import get_object_or_404
+from core.utils import activate_otp_transaction, create_otp_transaction, verify_otp
 
 from .models import PhoneVerification, User
-from core.utils import create_otp_transaction, activate_otp_transaction, verify_otp
+from .serializers import LoginSerializer, OTPRequestSerializer, OTPVerifySerializer, RegisterSerializer, UserSerializer
 
 
 class SendOTPView(APIView):
@@ -28,20 +27,14 @@ class SendOTPView(APIView):
 
         # Check if phone is already registered
         if User.objects.filter(phone=phone).exists():
-            return Response(
-                {"error": "Phone number already registered. Please login instead."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Phone number already registered. Please login instead."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if there's already an active OTP request
         existing_record = PhoneVerification.objects.filter(phone=phone).first()
         if existing_record:
             # If user has a recent OTP request, they should use resend
             if not existing_record.can_resend():
-                return Response(
-                    {"error": "OTP already sent. Please wait 60 seconds or use resend OTP endpoint."},
-                    status=status.HTTP_429_TOO_MANY_REQUESTS
-                )
+                return Response({"error": "OTP already sent. Please wait 60 seconds or use resend OTP endpoint."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         # Check if record exists
         record, _ = PhoneVerification.objects.get_or_create(phone=phone)
@@ -56,7 +49,7 @@ class SendOTPView(APIView):
             record.save()
 
             return Response(
-                {"message": f"OTP sent successfully"},
+                {"message": "OTP sent successfully"},
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
@@ -155,6 +148,7 @@ class LoginView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     # Rate limiting scope
@@ -169,10 +163,7 @@ class LogoutView(APIView):
             refresh_token = RefreshToken(refresh_token_str)
 
             try:
-                outstanding_token = OutstandingToken.objects.get(
-                    token=str(refresh_token),
-                    user=request.user
-                )
+                outstanding_token = OutstandingToken.objects.get(token=str(refresh_token), user=request.user)
                 if BlacklistedToken.objects.filter(token=outstanding_token).exists():
                     return Response({"detail": "Already logged out."}, status=status.HTTP_200_OK)
 
@@ -187,6 +178,7 @@ class LogoutView(APIView):
             return Response({"error": "Invalid or expired refresh token."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]

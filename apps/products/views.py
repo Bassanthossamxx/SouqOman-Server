@@ -1,23 +1,22 @@
-from rest_framework import generics, status, permissions
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.filters import SearchFilter, OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
+from core.permissions import IsOwnerOrSuperUser, IsSuperUserOrReadOnly
 
-from .models import Category, SubCategory, Product, AdRequest
-from .serializers import (
-    CategorySerializer,
-    CategoryDetailSerializer,
-    SubCategorySerializer,
-    ProductSerializer,
-    AdRequestSerializer,
-)
-from core.permissions import IsSuperUserOrReadOnly , IsOwnerOrSuperUser
 from .filters import ProductFilter
+from .models import AdRequest, Category, Product, SubCategory
+from .serializers import (
+    AdRequestSerializer,
+    CategoryDetailSerializer,
+    CategorySerializer,
+    ProductSerializer,
+    SubCategorySerializer,
+)
 
 
 class CategoryListCreateView(generics.ListCreateAPIView):
@@ -42,11 +41,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
-    search_fields = [
-        "name_en", "name_ar",
-        "category__name_en", "category__name_ar",
-        "subcategory__name_en", "subcategory__name_ar"
-    ]
+    search_fields = ["name_en", "name_ar", "category__name_en", "category__name_ar", "subcategory__name_en", "subcategory__name_ar"]
     ordering_fields = ["price", "posted_at", "views_count"]
     ordering = ["-posted_at"]
 
@@ -81,10 +76,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
         #  Check status and respond accordingly
         if product.status == Product.STATUS_PENDING:
             support = getattr(settings, "SUPPORT_PHONE", "support")
-            message = (
-                f"You have reached your free posting limit this month. "
-                f"Your product is pending approval. Please contact support at {support}."
-            )
+            message = f"You have reached your free posting limit this month. Your product is pending approval. Please contact support at {support}."
             return Response({**data, "message": message}, status=status.HTTP_201_CREATED)
 
         return Response(data, status=status.HTTP_201_CREATED)
@@ -121,6 +113,7 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 # -------------------------------
 #  AD REQUEST VIEWS
 # -------------------------------
+
 
 class AdRequestCreateView(generics.CreateAPIView):
     queryset = AdRequest.objects.all()

@@ -1,48 +1,43 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.filters import SearchFilter, OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from rest_framework.views import APIView
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth import authenticate
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.products.models import Product, AdRequest, Category, SubCategory
+from apps.products.filters import ProductFilter
+from apps.products.models import AdRequest, Category, Product, SubCategory
 from apps.products.serializers import (
-    ProductSerializer,
     AdRequestSerializer,
     CategorySerializer,
+    ProductSerializer,
     SubCategorySerializer,
 )
-from apps.products.filters import ProductFilter
 from core.permissions import IsSuperUser
-from .serializers import UserListSerializer, UserDetailSerializer
+
+from .serializers import UserDetailSerializer, UserListSerializer
 
 User = get_user_model()
 
 
-
 class AdminAllProductsView(generics.ListAPIView):
     """List all products (all statuses) - superuser only"""
+
     queryset = Product.objects.select_related("user", "category", "subcategory").prefetch_related("images")
     serializer_class = ProductSerializer
     permission_classes = [IsSuperUser]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
-    search_fields = [
-        "name_en", "name_ar",
-        "category__name_en", "category__name_ar",
-        "subcategory__name_en", "subcategory__name_ar"
-    ]
+    search_fields = ["name_en", "name_ar", "category__name_en", "category__name_ar", "subcategory__name_en", "subcategory__name_ar"]
     ordering_fields = ["price", "posted_at", "views_count"]
     ordering = ["-posted_at"]
 
 
 class AdminApprovePendingProductView(generics.UpdateAPIView):
     """Approve a pending product to make it active"""
+
     queryset = Product.objects.filter(status=Product.STATUS_PENDING)
     serializer_class = ProductSerializer
     permission_classes = [IsSuperUser]
@@ -57,9 +52,9 @@ class AdminApprovePendingProductView(generics.UpdateAPIView):
         return self.patch(request, *args, **kwargs)
 
 
-
 class AdminAdRequestListView(generics.ListAPIView):
     """List all ad requests (superuser only), with optional filter for not approved"""
+
     serializer_class = AdRequestSerializer
     permission_classes = [IsSuperUser]
 
@@ -73,6 +68,7 @@ class AdminAdRequestListView(generics.ListAPIView):
 
 class AdminApproveAdRequestView(generics.UpdateAPIView):
     """Approve AdRequest, set ad start and duration."""
+
     queryset = AdRequest.objects.all()
     serializer_class = AdRequestSerializer
     permission_classes = [IsSuperUser]
@@ -83,12 +79,15 @@ class AdminApproveAdRequestView(generics.UpdateAPIView):
 
         # Block re-approval attempts
         if ad_request.is_approved:
-            return Response({
-                "error": "Ad request is already approved and cannot be modified.",
-                "product": product.pk,
-                "ad_start": ad_request.ad_start,
-                "ad_end": ad_request.ad_end,
-            }, status=status.HTTP_409_CONFLICT)
+            return Response(
+                {
+                    "error": "Ad request is already approved and cannot be modified.",
+                    "product": product.pk,
+                    "ad_start": ad_request.ad_start,
+                    "ad_end": ad_request.ad_end,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
 
         ad_start_str = request.data.get("ad_start")
         ad_end_str = request.data.get("ad_end")
@@ -117,17 +116,22 @@ class AdminApproveAdRequestView(generics.UpdateAPIView):
         # approve
         ad_request.approve(request.user, ad_start, ad_end)
 
-        return Response({
-            "message": f"Product '{product.name_ar} - {product.pk}' marked as Ad from {ad_start.date()} to {ad_end.date()}.",
-        }, status=200)
+        return Response(
+            {
+                "message": f"Product '{product.name_ar} - {product.pk}' marked as Ad from {ad_start.date()} to {ad_end.date()}.",
+            },
+            status=200,
+        )
 
 
 # ========================
 # CATEGORY & SUBCATEGORY (ADMIN CREATE)
 # ========================
 
+
 class AdminCategoryCreateView(generics.CreateAPIView):
     """Create a new category - superuser only"""
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsSuperUser]
@@ -135,6 +139,7 @@ class AdminCategoryCreateView(generics.CreateAPIView):
 
 class AdminSubCategoryCreateView(generics.CreateAPIView):
     """Create a new subcategory - superuser only"""
+
     queryset = SubCategory.objects.all()
     serializer_class = SubCategorySerializer
     permission_classes = [IsSuperUser]
@@ -144,8 +149,10 @@ class AdminSubCategoryCreateView(generics.CreateAPIView):
 # PRODUCT DELETE (ADMIN HARD DELETE)
 # ========================
 
+
 class AdminProductDeleteView(generics.DestroyAPIView):
     """Hard delete a product - superuser only"""
+
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsSuperUser]
@@ -155,26 +162,22 @@ class AdminProductDeleteView(generics.DestroyAPIView):
 # USER MANAGEMENT
 # ========================
 
+
 class AdminUserListView(generics.ListAPIView):
     """List all users - superuser only"""
+
     queryset = User.objects.all()
     serializer_class = UserListSerializer
     permission_classes = [IsSuperUser]
     filter_backends = [SearchFilter, OrderingFilter]
-    search_fields = [
-        "phone",
-        "email",
-        "full_name_ar",
-        "full_name_en",
-        "governorate",
-        "wilayat"
-    ]
+    search_fields = ["phone", "email", "full_name_ar", "full_name_en", "governorate", "wilayat"]
     ordering_fields = ["date_joined", "email", "phone"]
     ordering = ["-date_joined"]
 
 
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update or delete a user - superuser only"""
+
     queryset = User.objects.all()
     serializer_class = UserDetailSerializer
     permission_classes = [IsSuperUser]
@@ -182,26 +185,26 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         user = self.get_object()
         if user.is_superuser:
-            return Response(
-                {"error": "Cannot delete a superuser account"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "Cannot delete a superuser account"}, status=status.HTTP_403_FORBIDDEN)
         return super().delete(request, *args, **kwargs)
 
 
 class DashboardSuperuserLoginView(APIView):
     def post(self, request):
-        phone = request.data.get('phone')
-        password = request.data.get('password')
+        phone = request.data.get("phone")
+        password = request.data.get("password")
         User = get_user_model()
         try:
             user = User.objects.get(phone=phone)
         except User.DoesNotExist:
-            return Response({'detail': 'Invalid credentials or not a superuser.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"detail": "Invalid credentials or not a superuser."}, status=status.HTTP_401_UNAUTHORIZED)
         if user.check_password(password) and user.is_superuser:
             refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_200_OK)
-        return Response({'detail': 'Invalid credentials or not a superuser.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response({"detail": "Invalid credentials or not a superuser."}, status=status.HTTP_401_UNAUTHORIZED)

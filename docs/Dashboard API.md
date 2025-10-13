@@ -74,6 +74,24 @@ Authenticate as a superuser to access dashboard endpoints. Returns JWT tokens if
 }
 ```
 
+**Phone Format:** Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX)
+
+**Example Request (Omani):**
+```json
+{
+  "phone": "+96891234567",
+  "password": "admin_password"
+}
+```
+
+**Example Request (Egyptian):**
+```json
+{
+  "phone": "+201234567890",
+  "password": "admin_password"
+}
+```
+
 **Response (200 OK):**
 ```json
 {
@@ -93,6 +111,7 @@ Authenticate as a superuser to access dashboard endpoints. Returns JWT tokens if
 - Only users with `is_superuser = true` can log in.
 - Use the `access` token as a Bearer token for authenticated requests.
 - The phone field is used for login instead of username.
+- Phone must be in Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX) format.
 
 ---
 

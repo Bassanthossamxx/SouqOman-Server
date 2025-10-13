@@ -9,6 +9,7 @@ from core.choices import GOVERNORATE_MAP, WILAYAT_MAP
 from core.validators import (
     validate_name_ar,
     validate_name_en,
+    validate_omani_phone,
 )
 
 
@@ -50,7 +51,7 @@ class User(AbstractUser):
     phone = models.CharField(
         max_length=15,
         unique=True,
-        # validators=[validate_omani_phone],
+        validators=[validate_omani_phone],
         blank=False,
         null=False,
     )

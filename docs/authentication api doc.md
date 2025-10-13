@@ -53,13 +53,20 @@ Initiates the OTP verification process by sending a one-time password to the pro
 
 | Field | Type | Required | Description | Validation Rules |
 |-------|------|----------|-------------|-----------------|
-| phone | string | Yes | User's phone number | Must be a valid Omani phone number format (e.g., +968XXXXXXXX ) |
+| phone | string | Yes | User's phone number | Must be Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX) format |
 
 #### Example Request
 
 ```json
 {
   "phone": "+96891234567"
+}
+```
+
+**Alternative example (Egyptian):**
+```json
+{
+  "phone": "+201234567890"
 }
 ```
 
@@ -239,7 +246,7 @@ Registers a new user in the system and automatically authenticates them (issues 
 
 | Field | Type | Required | Description | Validation Rules |
 |-------|------|----------|-------------|-----------------|
-| phone | string | Yes | User's phone number (must be verified) | Must be verified via OTP first; must follow Omani format: +968XXXXXXXX |
+| phone | string | Yes | User's phone number (must be verified) | Must be verified via OTP first; must follow Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX) format |
 | email | string | Yes | User's email address | Must be a valid email format and unique in the system |
 | password | string | Yes | User's password | Must pass Django password validation (minimum 8 characters, not entirely numeric, not too common) |
 | password2 | string | Yes | Password confirmation | Must match the password field exactly |
@@ -253,6 +260,20 @@ Registers a new user in the system and automatically authenticates them (issues 
 ```json
 {
   "phone": "+96891234567",
+  "email": "user@example.com",
+  "password": "SecurePassword123",
+  "password2": "SecurePassword123",
+  "full_name_ar": "محمد أحمد",
+  "full_name_en": "Mohammed Ahmed",
+  "governorate": "Muscat",
+  "wilayat": "Al Seeb"
+}
+```
+
+**Alternative example (Egyptian):**
+```json
+{
+  "phone": "+201234567890",
   "email": "user@example.com",
   "password": "SecurePassword123",
   "password2": "SecurePassword123",
@@ -295,7 +316,7 @@ If the phone number was not verified via OTP:
 
 ```json
 {
-  "phone": ["Phone must follow Omani format: +968XXXXXXXX"]
+  "phone": ["Phone must follow Egyptian format (+20XXXXXXXXXX) or Omani format (+968XXXXXXXX)"]
 }
 ```
 
@@ -401,7 +422,7 @@ Authenticates a user and provides access tokens.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| phone | string | Yes | User's phone number in format +968XXXXXXXX|
+| phone | string | Yes | User's phone number in Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX) format |
 | password | string | Yes | User's password |
 
 #### Example Request
@@ -409,6 +430,14 @@ Authenticates a user and provides access tokens.
 ```json
 {
   "phone": "+96891234567",
+  "password": "SecurePassword123"
+}
+```
+
+**Alternative example (Egyptian):**
+```json
+{
+  "phone": "+201234567890",
   "password": "SecurePassword123"
 }
 ```
@@ -942,7 +971,8 @@ Example Timeline:
 3. **Phone Number Validation:**
    - Phone numbers already registered cannot request OTP
    - The system will return an error directing users to login instead
-   - Supports format: `+968XXXXXXXX`
+   - Supports Egyptian format: `+20XXXXXXXXXX` (10 digits after +20)
+   - Supports Omani format: `+968XXXXXXXX` (8 digits after +968)
 
 4. **Token Storage:**
    - Store JWT tokens securely on the client side
@@ -965,7 +995,7 @@ Example Timeline:
 7. **Phone Format:**
    - Ensure phone numbers are always formatted consistently
    - Consider implementing a phone input mask on the frontend to guide users
-   - Backend accepts both `+968XXXXXXXX`` format
+   - Backend accepts both Egyptian (+20XXXXXXXXXX) and Omani (+968XXXXXXXX) formats
 
 8. **Authorization:**
    - For protected endpoints, always include the access token in the Authorization header

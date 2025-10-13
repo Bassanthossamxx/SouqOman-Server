@@ -318,7 +318,7 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 | `wilayat` | string | Yes | Must be valid wilayat for selected governorate | See [Wilayat Options](#wilayat-options) |
 | `price` | decimal | Yes | Minimum 10.00 | Max 10 digits, 2 decimal places |
 | `description` | text | Yes | - | No length limit |
-| `contact_phone` | string | Yes | Must be +968XXXXXXXX format | 8 digits after +968 |
+| `contact_phone` | string | Yes | Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX) format | Egyptian: 10 digits after +20, Omani: 8 digits after +968 |
 | `images` | files | Yes | 1-5 image files | Maximum 5 images allowed |
 
 **Response (201 Created) - Within Quota:**
@@ -434,7 +434,7 @@ images: [<file1>, <file2>, ...] (required, 1-5 files)
 **Invalid phone format:**
 ```json
 {
-  "contact_phone": ["Phone must follow Omani format: +968XXXXXXXX"]
+  "contact_phone": ["Phone must follow Egyptian format (+20XXXXXXXXXX) or Omani format (+968XXXXXXXX)"]
 }
 ```
 
@@ -800,10 +800,13 @@ All validation errors follow Django REST Framework's standard format:
 - Supported formats: JPG, PNG, GIF, WebP
 
 ### 2. Phone Number & WhatsApp
-- Contact phone must be in Omani format: `+968XXXXXXXX`
-- Must start with `+968` followed by exactly 8 digits
+- Contact phone must be in Egyptian (+20XXXXXXXXXX) or Omani (+968XXXXXXXX) format
+- Egyptian format: `+20` followed by exactly 10 digits
+- Omani format: `+968` followed by exactly 8 digits
 - The WhatsApp URL is automatically generated from this number
-- Format: `https://wa.me/968XXXXXXXX`
+- Format examples: 
+  - Egyptian: `https://wa.me/20XXXXXXXXXX`
+  - Omani: `https://wa.me/968XXXXXXXX`
 
 ### 3. Governorate/Wilayat Validation
 - The system validates that the wilayat belongs to the selected governorate

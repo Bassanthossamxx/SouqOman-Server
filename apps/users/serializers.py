@@ -3,6 +3,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from core.validators import validate_omani_phone
+
 User = get_user_model()
 
 
@@ -92,9 +94,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OTPRequestSerializer(serializers.Serializer):
-    phone = serializers.CharField(required=True)
+    phone = serializers.CharField(required=True, validators=[validate_omani_phone])
 
 
 class OTPVerifySerializer(serializers.Serializer):
-    phone = serializers.CharField(required=True)
+    phone = serializers.CharField(required=True, validators=[validate_omani_phone])
     otp = serializers.CharField(required=True)

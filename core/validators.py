@@ -14,6 +14,13 @@ def validate_name_en(value):
 
 
 def validate_omani_phone(value):
-    # Must start with +968 followed by 8 digits
-    if not re.match(r"^\+968[0-9]{8}$", value):
-        raise ValidationError("Phone must follow Omani format: +968XXXXXXXX")
+    """
+    Validates phone numbers for both Egyptian and Omani formats:
+    - Egyptian: +20 followed by 10 digits
+    - Omani: +968 followed by 8 digits
+    """
+    egyptian_pattern = r"^\+20[0-9]{10}$"
+    omani_pattern = r"^\+968[0-9]{8}$"
+
+    if not (re.match(egyptian_pattern, value) or re.match(omani_pattern, value)):
+        raise ValidationError("Phone must follow Egyptian format (+20XXXXXXXXXX) or Omani format (+968XXXXXXXX)")
